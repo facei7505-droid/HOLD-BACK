@@ -5,8 +5,11 @@ anchor_version = "0.31.1"
 resolution = true
 skip-lint = false
 
+[programs.devnet]
+holdback = "F3qhQqGxVpjDPndPx4KhwoAdvxbmUchQotYFe8zWxARt"
+
 [programs.localnet]
-holdback = "6t4LfjbFTBDVhmNypAsHYSvaKdpBNmWLpDaF3G8nZrvB"
+holdback = "F3qhQqGxVpjDPndPx4KhwoAdvxbmUchQotYFe8zWxARt"
 
 [registry]
 url = "https://api.apr.dev"

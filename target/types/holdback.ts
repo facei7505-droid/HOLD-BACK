@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/holdback.json`.
  */
 export type Holdback = {
-  "address": "6t4LfjbFTBDVhmNypAsHYSvaKdpBNmWLpDaF3G8nZrvB",
+  "address": "F3qhQqGxVpjDPndPx4KhwoAdvxbmUchQotYFe8zWxARt",
   "metadata": {
     "name": "holdback",
     "version": "0.1.0",

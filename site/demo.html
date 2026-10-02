@@ -15,6 +15,11 @@
   .demo-head .tag { color: var(--muted); }
   .demo-head .net { margin-left: auto; font-size: 12px; color: var(--muted); border: 1px solid var(--line); padding: 5px 10px; border-radius: 999px; }
   .demo-head .net b { color: var(--green); }
+  .demo-head { flex-wrap: wrap; }
+  .net-btn { font-family: inherit; font-weight: 600; font-size: 12px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--purple); background: rgba(155,107,255,.15); color: var(--text); cursor: pointer; }
+  .net-btn:disabled { opacity: .6; cursor: wait; }
+  .net-btn.on { border-color: var(--green); background: rgba(25,213,138,.12); }
+  td.sig a, .sub a { color: var(--blue); }
   main { display: grid; grid-template-columns: 1.25fr 1fr 1fr; gap: 16px; padding: 16px 22px; }
   .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
   .panel h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 12px; }
@@ -185,13 +190,14 @@
 
 <section class="s-demo-sec" id="demo"><div class="s-wrap">
   <h2>Run the whole flow</h2>
-  <div class="sim-note"><b>Interactive simulation.</b> This page runs the rules of the Holdback program in your browser, so you can click through the whole flow. The real Anchor program runs on a Solana local validator with 7 passing tests: see the videos and the <a href="https://github.com/facei7505-droid/HOLD-BACK" target="_blank" rel="noopener">GitHub repository</a>.</div>
+  <div class="sim-note" id="modenote"><b>Interactive simulation.</b> This page runs the rules of the Holdback program in your browser, so you can click through the whole flow. The real Anchor program is <a id="plink" href="#" target="_blank" rel="noopener">deployed on Solana devnet</a>: press <b>Use Phantom on devnet</b> to run the same flow as real transactions signed by your Phantom wallet (switch Phantom to devnet in Settings → Developer settings → Testnet mode, and get free devnet SOL at <a href="https://faucet.solana.com" target="_blank" rel="noopener">faucet.solana.com</a>). Source: <a href="https://github.com/facei7505-droid/HOLD-BACK" target="_blank" rel="noopener">GitHub repository</a>.</div>
   <div style="border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--bg)">
   <div class="demo-head">
   <div class="logo">H</div>
   <h1>Holdback</h1>
   <span class="tag">Retention money nobody can sit on</span>
-  <span class="net">Simulation · program <span id="pid">…</span></span>
+  <span class="net"><span id="netname">Simulation</span> · program <span id="pid">…</span></span>
+  <button class="net-btn" id="modebtn">Use Phantom on devnet</button>
 </div>
   <main>
   <section class="panel">
@@ -323,7 +329,7 @@
   <div class="s-road">
     <div class="s-step"><span class="tag">DONE</span><h3>Working program</h3><p>Anchor program with 8 instructions, 22 passing tests on a local validator, demo videos and this simulation.</p></div>
     <div class="s-step"><span class="tag">THIS WEEK</span><h3>10 interviews</h3><p>7 subcontractors and 3 developers in Shymkent. Goal: confirmed retention clauses and 2–3 letters of intent. Kit: docs/INTERVIEW-KIT.md.</p></div>
-    <div class="s-step"><span class="tag">NEXT</span><h3>Devnet and a real wallet</h3><p>Deploy to devnet, sign with Phantom instead of demo wallets. Steps: docs/DEVNET.md.</p></div>
+    <div class="s-step"><span class="tag">DONE</span><h3>Devnet and a real wallet</h3><p>Deployed to Solana devnet. Press "Use Phantom on devnet" in the demo above to sign every step with your own wallet.</p></div>
     <div class="s-step"><span class="tag">LATER</span><h3>Pilot and law-driven markets</h3><p>One real contract with test money, then New Zealand and Australia where trust accounts are required.</p></div>
   </div>
   <p class="s-small">Not yet verified: how common and how late retention is in Kazakhstan, what a developer would pay, and how a court treats the vault.</p>
@@ -341,7 +347,7 @@ const SIM = (() => {
   const rnd = (n) => Array.from({ length: n }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");
   let st;
   function reset() {
-    st = { roles: {}, contract: null, log: [], programId: "6t4LfjbFTBDVhmNypAsHYSvaKdpBNmWLpDaF3G8nZrvB" };
+    st = { roles: {}, contract: null, log: [], programId: "F3qhQqGxVpjDPndPx4KhwoAdvxbmUchQotYFe8zWxARt" };
     for (const k of Object.keys(names)) st.roles[k] = { name: names[k], pubkey: rnd(44), balance: 0 };
     st.roles.client.balance = 1000000; st.roles.funder.balance = 200000;
   }
@@ -429,9 +435,42 @@ const $ = (id) => document.getElementById(id);
 
 window.setCaption = (t) => { const c = $("caption"); c.textContent = t || ""; c.style.display = t ? "block" : "none"; };
 
-const api = SIM;
+// Simulation by default; "Use Phantom on devnet" swaps in the devnet client (site/devnet.js),
+// which answers the same api(path, body) calls with real transactions.
+let api = SIM, devnet = false;
+const DEVNET_PROGRAM_ID = "F3qhQqGxVpjDPndPx4KhwoAdvxbmUchQotYFe8zWxARt";
+const explorerUrl = (kind, id) => `https://explorer.solana.com/${kind}/${id}?cluster=devnet`;
+$("plink").href = explorerUrl("address", DEVNET_PROGRAM_ID);
 
-function toast(msg) { const t = $("toast"); t.textContent = msg; t.style.display = "block"; setTimeout(() => (t.style.display = "none"), 3500); }
+function loadDevnet() {
+  if (window.HoldbackDevnet) return Promise.resolve();
+  return new Promise((ok, bad) => { const s = document.createElement("script"); s.src = "devnet.js"; s.onload = ok; s.onerror = () => bad(new Error("could not load devnet.js")); document.head.appendChild(s); });
+}
+function clearView() { prevBal = {}; $("vamt").dataset.v = 0; $("vamt").textContent = "$0"; $("ctitle").textContent = "No contract yet"; $("csub").textContent = 'Click "Create contract"'; ["cfrozen","cask","cdone","cowner"].forEach((i) => ($(i).style.display = "none")); }
+
+$("modebtn").addEventListener("click", async () => {
+  const b = $("modebtn");
+  if (devnet) { api = SIM; devnet = false; b.textContent = "Use Phantom on devnet"; b.classList.remove("on"); $("netname").textContent = "Simulation"; clearView(); return refresh(); }
+  b.disabled = true; b.textContent = "Connecting…";
+  try {
+    await loadDevnet();
+    if (!HoldbackDevnet.available()) { window.open("https://phantom.app/download", "_blank", "noopener"); throw new Error("Phantom is not installed, staying in the simulation"); }
+    const w = await HoldbackDevnet.connect();
+    api = HoldbackDevnet.api; devnet = true;
+    b.textContent = "Back to simulation"; b.classList.add("on");
+    $("netname").innerHTML = `<b>Devnet</b> · ${w.pubkey.slice(0, 4)}…${w.pubkey.slice(-4)} · ${w.sol.toFixed(3)} SOL`;
+    if (w.sol < 0.05) {
+      toast("Your wallet needs devnet SOL, requesting an airdrop…");
+      try { await HoldbackDevnet.airdrop(); toast("Airdrop of 1 devnet SOL received"); }
+      catch { toast("Airdrop is rate-limited: get devnet SOL at faucet.solana.com, then try again"); }
+    }
+    clearView();
+  } catch (e) { toast(e.message || String(e)); b.textContent = "Use Phantom on devnet"; }
+  b.disabled = false;
+  await refresh();
+});
+
+function toast(msg) { const t = $("toast"); t.textContent = msg; t.style.display = "block"; clearTimeout(toast.h); toast.h = setTimeout(() => (t.style.display = "none"), 5000); }
 
 async function refresh() {
   S = await api("/api/state");
@@ -448,7 +487,9 @@ async function refresh() {
   const c = S.contract;
   if (c) {
     $("ctitle").textContent = c.title;
-    $("csub").textContent = `Vault: ${c.address.slice(0, 6)}…${c.address.slice(-4)} · retention ${c.retentionPct}%`;
+    const short = `${c.address.slice(0, 6)}…${c.address.slice(-4)}`;
+    $("csub").innerHTML = `Contract: ${c.url ? `<a href="${c.url}" target="_blank" rel="noopener">${short}</a>` : short} · retention ${c.retentionPct}%`;
+    if (S.devnet) $("netname").innerHTML = `<b>Devnet</b> · ${S.roles.client.pubkey.slice(0, 4)}…${S.roles.client.pubkey.slice(-4)} · ${S.sol.toFixed(3)} SOL`;
     const old = Number($("vamt").dataset.v || 0);
     $("vamt").textContent = fmt(c.vault); $("vamt").dataset.v = c.vault;
     if (c.vault !== old) { $("vault").classList.add("pulse"); setTimeout(() => $("vault").classList.remove("pulse"), 900); }
@@ -467,7 +508,7 @@ async function refresh() {
   L.innerHTML = S.log.length ? "" : '<tr><td class="sub">Nothing yet</td></tr>';
   for (const e of S.log) {
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td class="who">${new Date(e.t).toLocaleTimeString("en-US")}</td><td class="who">${e.role}</td><td>${e.action}</td><td class="sig">${e.sig.slice(0, 8)}…${e.sig.slice(-6)}</td><td class="fee">${e.fee !== null ? (e.fee / 1e9).toFixed(6) + " SOL" : ""}</td>`;
+    tr.innerHTML = `<td class="who">${new Date(e.t).toLocaleTimeString("en-US")}</td><td class="who">${e.role}</td><td>${e.action}</td><td class="sig">${e.url ? `<a href="${e.url}" target="_blank" rel="noopener">${e.sig.slice(0, 8)}…${e.sig.slice(-6)}</a>` : `${e.sig.slice(0, 8)}…${e.sig.slice(-6)}`}</td><td class="fee">${e.fee !== null ? (e.fee / 1e9).toFixed(6) + " SOL" : ""}</td>`;
     L.appendChild(tr);
   }
 }
@@ -485,10 +526,11 @@ function tick() {
 }
 
 async function run(a, p, btn) {
-  if (a === "reset") { prevBal = {}; $("vamt").dataset.v = 0; $("vamt").textContent = "$0"; $("ctitle").textContent = "No contract yet"; $("csub").textContent = 'Click "Create contract"'; ["cfrozen","cask","cdone","cowner"].forEach((i) => ($(i).style.display = "none")); }
-  if (a === "list" && !p) p = { price: Math.round(S.contract.vault * 0.9) };
+  if (a === "reset") clearView();
+  if (a === "list" && !p) p = { price: Math.round(((S.contract && S.contract.vault) || 0) * 0.9) };
   document.querySelectorAll(".btn").forEach((x) => x.classList.remove("active"));
   if (btn) btn.classList.add("active");
+  if (devnet && a !== "reset") toast("Checking the transaction on devnet, then confirm it in Phantom…");
   try {
     await api("/api/do/" + a, p || {});
     if (a === "pay") {
@@ -506,6 +548,7 @@ $("bbtn").addEventListener("click", async () => {
   try {
     const account = S.roles.stranger.pubkey;
     const { transaction } = await api("/api/actions/release", { account });
+    if (devnet) toast("Checking the transaction on devnet, then confirm it in Phantom…");
     await api("/api/wallet/sign-and-send", { transaction, role: "stranger" });
   } catch (e) { toast("Program rejected: " + e.message); }
   await refresh();

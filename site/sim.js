@@ -6,7 +6,7 @@ const SIM = (() => {
   const rnd = (n) => Array.from({ length: n }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");
   let st;
   function reset() {
-    st = { roles: {}, contract: null, log: [], programId: "6t4LfjbFTBDVhmNypAsHYSvaKdpBNmWLpDaF3G8nZrvB" };
+    st = { roles: {}, contract: null, log: [], programId: "F3qhQqGxVpjDPndPx4KhwoAdvxbmUchQotYFe8zWxARt" };
     for (const k of Object.keys(names)) st.roles[k] = { name: names[k], pubkey: rnd(44), balance: 0 };
     st.roles.client.balance = 1000000; st.roles.funder.balance = 200000;
   }

@@ -14,7 +14,7 @@ use anchor_spl::token_2022::spl_token_2022::{
 };
 use anchor_spl::token_interface::{self, Mint, TokenAccount, TokenInterface, TransferChecked};
 
-declare_id!("6t4LfjbFTBDVhmNypAsHYSvaKdpBNmWLpDaF3G8nZrvB");
+declare_id!("F3qhQqGxVpjDPndPx4KhwoAdvxbmUchQotYFe8zWxARt");
 
 pub const MAX_RETENTION_BPS: u16 = 2_000; // 20%
 /// The arbiter window may not exceed one year.

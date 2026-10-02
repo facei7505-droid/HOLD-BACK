@@ -43,3 +43,10 @@ What to know:
 - Mints that are Token-2022 with fee, hook, delegate or pause extensions are refused by `create_contract` (error `UnsafeMint`). If you plan to use KZTE, check its extensions first; if it uses one on the blocklist, it will be refused until the program is changed on purpose.
 - Amounts in the program are base units; the UI must apply the mint's decimals (2 for the test token, 6 for devnet USDC).
 - Mainnet needs the checklist in [THREAT-MODEL.md](THREAT-MODEL.md) first. Do not point this at real USDC before then.
+
+## Current devnet deployment
+
+Program ID: `F3qhQqGxVpjDPndPx4KhwoAdvxbmUchQotYFe8zWxARt`
+([Solana Explorer](https://explorer.solana.com/address/F3qhQqGxVpjDPndPx4KhwoAdvxbmUchQotYFe8zWxARt?cluster=devnet)).
+
+The site's demo has a "Use Phantom on devnet" button: the connected Phantom wallet is the developer and pays fees, the other roles are throwaway keypairs created in the browser. The client lives in `app/devnet-client.js`; rebuild `site/devnet.js` with `npm run build:site` after changing it or the IDL.
