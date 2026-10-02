@@ -23,28 +23,34 @@ Not yet verified: how common and how late retention is in Kazakhstan, our first 
 
 ## How it works
 
-1. `create_contract`: the client opens a contract with a subcontractor and an arbiter, sets the retention % and the warranty end. A vault (ATA owned by the contract PDA) is created.
+1. `create_contract`: the client proposes a contract to a subcontractor, naming an arbiter, the retention %, the warranty end and an arbiter window. Client, subcontractor and arbiter must be three different wallets. A vault (ATA owned by the contract PDA) is created.
+   `accept_contract`: the subcontractor accepts the terms and the arbiter. Nothing can be paid before this.
 2. `pay_progress`: one transaction, two transfers: 95% to the subcontractor, 5% into the vault.
 3. `raise_defect`: before the warranty ends the client freezes only the cost of a defect (with an evidence hash).
 4. `resolve_defect`: the arbiter either pays the frozen amount to the client for the repair or unfreezes it.
-5. `list_claim` / `buy_claim`: the claim holder offers the locked retention for sale; a funder pays and becomes the beneficiary in the same transaction.
-6. `release`: after the warranty date, with no open defect, **anyone** can send the vault balance to the current beneficiary. Exposed as a Solana Action (Blink) in the demo.
+5. `list_claim` / `buy_claim`: the claim holder offers the locked retention for sale; a funder pays and becomes the beneficiary in the same transaction. The buyer states the minimum unfrozen vault balance they expect, so the sale fails if the vault shrank.
+6. `release`: after the warranty date, with no open defect, **anyone** can send the vault balance to the current beneficiary. If a defect is still open after the arbiter window, a silent arbiter cannot block the release. Exposed as a Solana Action (Blink) in the demo.
 
-Works with SPL Token and Token-2022 (`token_interface`, `transfer_checked`).
+Works with SPL Token and plain Token-2022 mints (`token_interface`, `transfer_checked`). Mints with fee, hook, delegate or pause extensions are refused.
 
 ## Repository layout
 
 | Path | What |
 |---|---|
-| `programs/holdback/src/lib.rs` | Anchor program, 7 instructions |
-| `tests/holdback.ts`, `tests/edge-cases.ts` | 15 tests against a local validator |
+| `programs/holdback/src/lib.rs` | Anchor program, 8 instructions |
+| `tests/holdback.ts`, `tests/edge-cases.ts`, `tests/hardening.ts` | 22 tests against a local validator |
 | `app/` | Demo server and web UI (role wallets, vault, timer, on-chain log, Blink) |
 | `deck/` | Pitch deck (source, HTML, PDF) |
 | `media/` | Demo and pitch videos, recording scripts, narration text |
 | `docs/SCORECARD.md` | Score against the evaluation rubric and the fastest improvements |
 | `docs/MARKET-MODEL.md` | Bottom-up market model, sourced vs assumed inputs |
 | `docs/INTERVIEW-KIT.md` | Interview scripts, evidence rules, letter of intent, outreach messages |
-| `docs/DEVNET.md` | Devnet deployment and the real-wallet next step |
+| `docs/DEVNET.md` | Devnet deployment, real-wallet next step, USDC on devnet |
+| `docs/BUSINESS-MODEL.md` | Who pays, unit economics, break-even (assumptions marked) |
+| `docs/LEGAL.md` | Is the vault protected in bankruptcy? What is unproven, questions for a lawyer |
+| `docs/THREAT-MODEL.md` | Security self-review, findings, fixes, checklist before real money |
+| `docs/MENTOR-QA.md` | Short honest answers to the questions a mentor or jury will ask |
+| `docs/ADVISOR-OUTREACH.md` | Draft messages to recruit a construction or legal advisor |
 | `site/` | Product site with the live simulation and calculators (`demo.html`), standalone deck |
 | `target/idl/holdback.json` | Program IDL |
 
@@ -75,7 +81,10 @@ WARRANTY_SECS=55 node app/server.js
 ## Honest limitations
 
 - Runs on a local validator only; not deployed to devnet yet (devnet is unreachable from the build sandbox, steps in `docs/DEVNET.md`).
-- A test token stands in for USDC / KZTE.
+- A test token stands in for USDC / KZTE on the local demo; the program works with any plain mint (devnet USDC steps in `docs/DEVNET.md`).
+- **Not audited.** Self-review only ([threat model](docs/THREAT-MODEL.md)); do not use real money. The upgrade authority must be moved to a multisig or removed first.
+- Legal protection of the vault in a bankruptcy is unproven ([legal notes](docs/LEGAL.md)).
+- No fee mechanism in the program yet ([business model](docs/BUSINESS-MODEL.md)).
 - The demo server signs for every role instead of a wallet like Phantom, to show the whole flow on one screen.
 - One open defect at a time, one arbiter per contract.
 - No security audit. Whether a court would respect the vault in a bankruptcy is untested.

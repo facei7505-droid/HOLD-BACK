@@ -14,10 +14,42 @@ export type Holdback = {
   },
   "instructions": [
     {
+      "name": "acceptContract",
+      "docs": [
+        "The subcontractor accepts the terms, including the arbiter. Only now",
+        "can payments start."
+      ],
+      "discriminator": [
+        217,
+        254,
+        164,
+        16,
+        244,
+        59,
+        30,
+        81
+      ],
+      "accounts": [
+        {
+          "name": "subcontractor",
+          "signer": true,
+          "relations": [
+            "contract"
+          ]
+        },
+        {
+          "name": "contract",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "buyClaim",
       "docs": [
         "A funder buys the claim: pays the holder and becomes the beneficiary",
-        "in the same transaction, so neither side can be cheated."
+        "in the same transaction, so neither side can be cheated. `min_unfrozen`",
+        "protects the buyer against the vault shrinking before the sale lands."
       ],
       "discriminator": [
         168,
@@ -46,6 +78,62 @@ export type Holdback = {
           ]
         },
         {
+          "name": "vault",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "contract"
+              },
+              {
+                "kind": "account",
+                "path": "tokenProgram"
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
           "name": "buyerToken",
           "writable": true
         },
@@ -61,13 +149,21 @@ export type Holdback = {
         {
           "name": "maxPrice",
           "type": "u64"
+        },
+        {
+          "name": "minUnfrozen",
+          "type": "u64"
         }
       ]
     },
     {
       "name": "createContract",
       "docs": [
-        "Client opens a contract with a subcontractor and an arbiter."
+        "Client proposes a contract to a subcontractor and names an arbiter.",
+        "The contract stays `Proposed` until the subcontractor accepts it, so a",
+        "client cannot unilaterally pick a friendly arbiter.",
+        "`arbiter_window_secs`: how long after the warranty ends the arbiter may",
+        "still settle an open defect before anyone can release the vault."
       ],
       "discriminator": [
         244,
@@ -203,6 +299,10 @@ export type Holdback = {
         },
         {
           "name": "warrantySecs",
+          "type": "i64"
+        },
+        {
+          "name": "arbiterWindowSecs",
           "type": "i64"
         },
         {
@@ -654,6 +754,19 @@ export type Holdback = {
       ]
     },
     {
+      "name": "contractAccepted",
+      "discriminator": [
+        44,
+        209,
+        126,
+        23,
+        190,
+        99,
+        31,
+        196
+      ]
+    },
+    {
       "name": "contractCreated",
       "discriminator": [
         80,
@@ -789,6 +902,31 @@ export type Holdback = {
       "code": 6013,
       "name": "alreadyOwner",
       "msg": "Buyer already owns the claim"
+    },
+    {
+      "code": 6014,
+      "name": "badParties",
+      "msg": "Client, subcontractor and arbiter must be three different wallets"
+    },
+    {
+      "code": 6015,
+      "name": "badArbiterWindow",
+      "msg": "Arbiter window must be positive and at most one year"
+    },
+    {
+      "code": 6016,
+      "name": "notProposed",
+      "msg": "Contract has not been proposed or was already accepted"
+    },
+    {
+      "code": 6017,
+      "name": "vaultChanged",
+      "msg": "The vault holds less unfrozen money than the buyer expected"
+    },
+    {
+      "code": 6018,
+      "name": "unsafeMint",
+      "msg": "This token has extensions that can break the vault (fees, hooks, delegates)"
     }
   ],
   "types": [
@@ -874,6 +1012,10 @@ export type Holdback = {
             "type": "i64"
           },
           {
+            "name": "arbiterWindowSecs",
+            "type": "i64"
+          },
+          {
             "name": "warrantyEnd",
             "type": "i64"
           },
@@ -925,6 +1067,22 @@ export type Holdback = {
           {
             "name": "title",
             "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "contractAccepted",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "contract",
+            "type": "pubkey"
+          },
+          {
+            "name": "subcontractor",
+            "type": "pubkey"
           }
         ]
       }
@@ -1055,6 +1213,9 @@ export type Holdback = {
       "type": {
         "kind": "enum",
         "variants": [
+          {
+            "name": "proposed"
+          },
           {
             "name": "active"
           },

@@ -8,10 +8,42 @@
   },
   "instructions": [
     {
+      "name": "accept_contract",
+      "docs": [
+        "The subcontractor accepts the terms, including the arbiter. Only now",
+        "can payments start."
+      ],
+      "discriminator": [
+        217,
+        254,
+        164,
+        16,
+        244,
+        59,
+        30,
+        81
+      ],
+      "accounts": [
+        {
+          "name": "subcontractor",
+          "signer": true,
+          "relations": [
+            "contract"
+          ]
+        },
+        {
+          "name": "contract",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "buy_claim",
       "docs": [
         "A funder buys the claim: pays the holder and becomes the beneficiary",
-        "in the same transaction, so neither side can be cheated."
+        "in the same transaction, so neither side can be cheated. `min_unfrozen`",
+        "protects the buyer against the vault shrinking before the sale lands."
       ],
       "discriminator": [
         168,
@@ -40,6 +72,62 @@
           ]
         },
         {
+          "name": "vault",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "contract"
+              },
+              {
+                "kind": "account",
+                "path": "token_program"
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
           "name": "buyer_token",
           "writable": true
         },
@@ -55,13 +143,21 @@
         {
           "name": "max_price",
           "type": "u64"
+        },
+        {
+          "name": "min_unfrozen",
+          "type": "u64"
         }
       ]
     },
     {
       "name": "create_contract",
       "docs": [
-        "Client opens a contract with a subcontractor and an arbiter."
+        "Client proposes a contract to a subcontractor and names an arbiter.",
+        "The contract stays `Proposed` until the subcontractor accepts it, so a",
+        "client cannot unilaterally pick a friendly arbiter.",
+        "`arbiter_window_secs`: how long after the warranty ends the arbiter may",
+        "still settle an open defect before anyone can release the vault."
       ],
       "discriminator": [
         244,
@@ -197,6 +293,10 @@
         },
         {
           "name": "warranty_secs",
+          "type": "i64"
+        },
+        {
+          "name": "arbiter_window_secs",
           "type": "i64"
         },
         {
@@ -648,6 +748,19 @@
       ]
     },
     {
+      "name": "ContractAccepted",
+      "discriminator": [
+        44,
+        209,
+        126,
+        23,
+        190,
+        99,
+        31,
+        196
+      ]
+    },
+    {
       "name": "ContractCreated",
       "discriminator": [
         80,
@@ -783,6 +896,31 @@
       "code": 6013,
       "name": "AlreadyOwner",
       "msg": "Buyer already owns the claim"
+    },
+    {
+      "code": 6014,
+      "name": "BadParties",
+      "msg": "Client, subcontractor and arbiter must be three different wallets"
+    },
+    {
+      "code": 6015,
+      "name": "BadArbiterWindow",
+      "msg": "Arbiter window must be positive and at most one year"
+    },
+    {
+      "code": 6016,
+      "name": "NotProposed",
+      "msg": "Contract has not been proposed or was already accepted"
+    },
+    {
+      "code": 6017,
+      "name": "VaultChanged",
+      "msg": "The vault holds less unfrozen money than the buyer expected"
+    },
+    {
+      "code": 6018,
+      "name": "UnsafeMint",
+      "msg": "This token has extensions that can break the vault (fees, hooks, delegates)"
     }
   ],
   "types": [
@@ -868,6 +1006,10 @@
             "type": "i64"
           },
           {
+            "name": "arbiter_window_secs",
+            "type": "i64"
+          },
+          {
             "name": "warranty_end",
             "type": "i64"
           },
@@ -919,6 +1061,22 @@
           {
             "name": "title",
             "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ContractAccepted",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "contract",
+            "type": "pubkey"
+          },
+          {
+            "name": "subcontractor",
+            "type": "pubkey"
           }
         ]
       }
@@ -1049,6 +1207,9 @@
       "type": {
         "kind": "enum",
         "variants": [
+          {
+            "name": "Proposed"
+          },
           {
             "name": "Active"
           },

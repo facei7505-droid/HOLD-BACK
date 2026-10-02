@@ -13,6 +13,7 @@ const spl = require("@solana/spl-token");
 const RPC = process.env.RPC_URL || "http://127.0.0.1:8899";
 const PORT = Number(process.env.PORT || 3000);
 const WARRANTY_SECS = Number(process.env.WARRANTY_SECS || 25);
+const ARBITER_WINDOW_SECS = Number(process.env.ARBITER_WINDOW_SECS || 3600);
 const idl = JSON.parse(fs.readFileSync(path.join(__dirname, "../target/idl/holdback.json"), "utf8"));
 const conn = new Connection(RPC, "confirmed");
 const TP = spl.TOKEN_2022_PROGRAM_ID;
@@ -113,10 +114,13 @@ const actions = {
     contractId += 1;
     contract = contractPda(contractId);
     const sig = await program.methods
-      .createContract(new BN(contractId), 500, new BN(WARRANTY_SECS), "Turan Residences, electrical, block B")
+      .createContract(new BN(contractId), 500, new BN(WARRANTY_SECS), new BN(ARBITER_WINDOW_SECS), "Turan Residences, electrical, block B")
       .accounts({ client: k("client").publicKey, subcontractor: k("sub").publicKey, arbiter: k("arbiter").publicKey, mint, tokenProgram: TP })
       .signers([k("client")]).rpc();
-    return record("client", "Created contract: 5% retention, " + WARRANTY_SECS + " s warranty (2 years in real life)", sig);
+    // the subcontractor accepts the terms and the arbiter before anything can be paid
+    await program.methods.acceptContract()
+      .accounts({ subcontractor: k("sub").publicKey, contract }).signers([k("sub")]).rpc();
+    return record("client", "Created contract: 5% retention, " + WARRANTY_SECS + " s warranty (2 years in real life); subcontractor accepted", sig);
   },
   async pay({ amount }) {
     const sig = await program.methods.payProgress(new BN(Math.round(amount * D)))
@@ -150,7 +154,10 @@ const actions = {
   },
   async buy() {
     const c = await program.account.contract.fetch(contract);
-    const sig = await program.methods.buyClaim(c.askPrice)
+    // the buyer states how much unfrozen money they expect in the vault (slippage guard)
+    const vaultAmount = Number((await spl.getAccount(conn, ata(contract), "confirmed", TP)).amount);
+    const minUnfrozen = Math.max(0, vaultAmount - c.frozen.toNumber());
+    const sig = await program.methods.buyClaim(c.askPrice, new BN(minUnfrozen))
       .accounts({ buyer: k("funder").publicKey, contract, mint, buyerToken: ata(k("funder").publicKey), sellerToken: ata(c.beneficiary), tokenProgram: TP })
       .signers([k("funder")]).rpc();
     return record("funder", `Bought the claim for ${fmt(c.askPrice.toNumber() / D)}: payment and ownership change in one transaction`, sig);
@@ -238,7 +245,11 @@ const server = http.createServer(async (req, res) => {
       WarrantyNotOver: "the warranty has not ended yet, the vault is locked",
       WarrantyOver: "the warranty has already ended",
       DefectOpen: "a defect dispute is open",
-      NotActive: "the contract is already closed",
+      NotActive: "the contract is not open for this (not accepted yet, or already closed)",
+      NotProposed: "the contract was already accepted",
+      BadParties: "client, subcontractor and arbiter must be different wallets",
+      VaultChanged: "the vault holds less unfrozen money than expected",
+      UnsafeMint: "this token has extensions that can break the vault",
       NotForSale: "the claim is not for sale",
       BadDefectAmount: "the defect amount exceeds what is locked in the vault",
       ConstraintHasOne: "this wallet is not allowed to do that",

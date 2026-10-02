@@ -57,7 +57,7 @@ describe("holdback", () => {
 
   it("creates a contract with 5% retention", async () => {
     await program.methods
-      .createContract(contractId, 500, new BN(8), "Turan Residences, electrical, block B")
+      .createContract(contractId, 500, new BN(8), new BN(3600), "Turan Residences, electrical, block B")
       .accounts({
         client: client.publicKey,
         subcontractor: sub.publicKey,
@@ -67,7 +67,12 @@ describe("holdback", () => {
       })
       .signers([client])
       .rpc();
-    const c = await program.account.contract.fetch(contract);
+    let c = await program.account.contract.fetch(contract);
+    expect(c.status).to.have.property("proposed");
+    // the subcontractor must accept the terms (and the arbiter) before any payment
+    await program.methods.acceptContract().accounts({ subcontractor: sub.publicKey, contract }).signers([sub]).rpc();
+    c = await program.account.contract.fetch(contract);
+    expect(c.status).to.have.property("active");
     expect(c.retentionBps).to.eq(500);
     expect(c.beneficiary.toBase58()).to.eq(sub.publicKey.toBase58());
   });
@@ -144,7 +149,7 @@ describe("holdback", () => {
       .rpc();
     const subBefore = await balance(sub.publicKey);
     await program.methods
-      .buyClaim(KZT(900_000))
+      .buyClaim(KZT(900_000), new BN(0))
       .accounts({
         buyer: funder.publicKey,
         contract,

@@ -8,3 +8,7 @@ test-ledger/
 .DS_Store
 # program keypair is generated locally with `anchor keys sync`
 **/*-keypair.json
+
+# user voice recordings and voiced videos stay private
+media/voice/
+media/*-voice*.mp4

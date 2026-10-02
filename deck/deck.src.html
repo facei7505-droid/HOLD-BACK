@@ -156,14 +156,14 @@ td { padding: 20px 18px; border-top: 1px solid var(--line); vertical-align: top;
   <div class="kicker">How we use Solana</div>
   <h2>A real program, not a wallet button</h2>
   <div class="grid g3">
-    <div class="card"><h3>Anchor program</h3><div class="t">7 instructions: create contract, pay with split, raise defect, resolve, list claim, buy claim, release.</div></div>
+    <div class="card"><h3>Anchor program</h3><div class="t">8 instructions: create and accept contract, pay with split, raise defect, resolve, list claim, buy claim, release.</div></div>
     <div class="card"><h3>PDA vault</h3><div class="t">The vault has no private key. Only the program can sign a transfer, and only by the rules.</div></div>
     <div class="card"><h3>Atomicity</h3><div class="t">Splitting a payment and selling a claim are single transactions: all or nothing.</div></div>
-    <div class="card"><h3>Token-2022</h3><div class="t">Works with both token standards: USDC, KZTE or any stablecoin.</div></div>
+    <div class="card"><h3>Token-2022</h3><div class="t">Works with SPL Token and plain Token-2022 mints, such as USDC. Risky token extensions are refused.</div></div>
     <div class="card"><h3>Solana Actions</h3><div class="t">The release button is a Blink: a link anyone can click.</div></div>
     <div class="card"><h3>Cost</h3><div class="t"><span class="mono hl">0.000005 SOL</span> per action. The whole 8-transaction scenario costs a fraction of a cent.</div></div>
   </div>
-  <div class="src">Open source · 7 automated tests pass on a local Solana validator (solana-test-validator 2.3, Anchor 0.31)</div>
+  <div class="src">Open source · 22 automated tests pass on a local Solana validator (solana-test-validator 2.3, Anchor 0.31)</div>
 </section>
 
 <!-- 8 -->
@@ -204,6 +204,48 @@ td { padding: 20px 18px; border-top: 1px solid var(--line); vertical-align: top;
   <div class="src">* the money is outside the client's account; how a court treats it in a bankruptcy has not been tested</div>
 </section>
 
+<!-- 11a -->
+<section class="slide">
+  <div class="kicker">How we make money</div>
+  <h2>Three revenue lines, not a fee on the vault</h2>
+  <div class="grid g2" style="align-items:start">
+    <div class="card">
+      <table>
+        <tr><th>Per contract, $10,000 retention, 12 months</th><th>Income</th></tr>
+        <tr><td>0.5% fee on the held amount</td><td class="mono">$50</td></tr>
+        <tr><td>Fee when a claim is sold early</td><td class="mono">$13.5</td></tr>
+        <tr><td>Flat contract fee (replaces a bond premium)</td><td class="mono">$75</td></tr>
+        <tr><td>Share of vault yield (not built)</td><td class="mono">$90</td></tr>
+      </table>
+    </div>
+    <div>
+      <p class="lead" style="font-size:31px">The vault fee alone is thin: <b class="ha">$50 a year</b> on a $200,000 subcontract.</p>
+      <p class="lead" style="font-size:31px;margin-top:26px">With the first three lines, break-even for a team of three is about <b class="hl">780 contracts a year</b>, 3.6% of Kazakhstan.</p>
+      <p class="lead" style="font-size:31px;margin-top:26px">Kazakhstan is the pilot. England alone is £16–30 m a year at the same fee.</p>
+    </div>
+  </div>
+  <div class="src">All prices are our assumptions, to be replaced by interview answers. Details: docs/BUSINESS-MODEL.md</div>
+</section>
+
+<!-- 11b -->
+<section class="slide">
+  <div class="kicker">What we checked</div>
+  <h2>Security and law: fixed and still open</h2>
+  <div class="grid g2">
+    <div class="card">
+      <h3 class="hl">Security self-review</h3>
+      <div class="t">4 weaknesses found and fixed with tests: arbiter chosen by the client alone, a silent arbiter locking the vault, buyer exposed to a shrinking vault, token extensions that break payouts.</div>
+      <div class="s"><b class="ha">Open:</b> not audited; the upgrade key must go to a multisig before real money; a stablecoin issuer can freeze a vault.</div>
+    </div>
+    <div class="card">
+      <h3 class="hp">Legal</h3>
+      <div class="t">Is the vault safe if the client goes bankrupt? Courts have protected retention held on trust in a separate fund. Nobody has ruled on a program-owned vault.</div>
+      <div class="s"><b class="ha">Open:</b> a contract clause that declares the trust, a lawyer's opinion, rules on claim sales and stablecoins. Devnet and test tokens until then.</div>
+    </div>
+  </div>
+  <div class="src">Prototype, not audited. Details: docs/THREAT-MODEL.md, docs/LEGAL.md</div>
+</section>
+
 <!-- 11 -->
 <section class="slide">
   <div class="kicker">Plan</div>
@@ -224,7 +266,7 @@ td { padding: 20px 18px; border-top: 1px solid var(--line); vertical-align: top;
   <div class="logo"><div class="m">H</div><div class="w">Holdback</div></div>
   <h1 style="font-size:84px">A subcontractor's money<br>sits with <span class="hl">rules</span>, not<br>with the debtor</h1>
   <p class="lead">We are looking for 3 developers and 10 subcontractors for a pilot in Kazakhstan.</p>
-  <div style="margin-top:60px"><span class="pill g">Demo works</span><span class="pill p">7 tests pass</span><span class="pill">Open source</span></div>
+  <div style="margin-top:60px"><span class="pill g">Demo works</span><span class="pill p">22 tests pass</span><span class="pill">Open source</span></div>
   <div class="foot">Colosseum · 2026</div>
 </section>
 

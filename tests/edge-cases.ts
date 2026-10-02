@@ -30,14 +30,16 @@ describe("holdback edge cases", () => {
   const pda = (id: BN) =>
     PublicKey.findProgramAddressSync([Buffer.from("contract"), client.publicKey.toBuffer(), id.toArrayLike(Buffer, "le", 8)], program.programId)[0];
 
-  async function open(bps = 500, warranty = 3600) {
+  async function open(bps = 500, warranty = 3600, window = 3600) {
     const id = new BN(next++);
     await program.methods
-      .createContract(id, bps, new BN(warranty), "edge case")
+      .createContract(id, bps, new BN(warranty), new BN(window), "edge case")
       .accounts({ client: client.publicKey, subcontractor: sub.publicKey, arbiter: arbiter.publicKey, mint, tokenProgram: tp })
       .signers([client])
       .rpc();
-    return pda(id);
+    const c = pda(id);
+    await program.methods.acceptContract().accounts({ subcontractor: sub.publicKey, contract: c }).signers([sub]).rpc();
+    return c;
   }
   const pay = (contract: PublicKey, amount: number) =>
     program.methods
@@ -119,7 +121,7 @@ describe("holdback edge cases", () => {
     const c = await open();
     await pay(c, 10_000);
     const buy = (max: number) =>
-      program.methods.buyClaim(new BN(max)).accounts({ buyer: funder.publicKey, contract: c, mint, buyerToken: ata(funder.publicKey), sellerToken: ata(sub.publicKey), tokenProgram: tp }).signers([funder]).rpc();
+      program.methods.buyClaim(new BN(max), new BN(0)).accounts({ buyer: funder.publicKey, contract: c, mint, buyerToken: ata(funder.publicKey), sellerToken: ata(sub.publicKey), tokenProgram: tp }).signers([funder]).rpc();
     await expectFail(buy(1000), /NotForSale/);
     await program.methods.listClaim(new BN(450)).accounts({ beneficiary: sub.publicKey, contract: c }).signers([sub]).rpc();
     await expectFail(buy(400), /PriceChanged/);
