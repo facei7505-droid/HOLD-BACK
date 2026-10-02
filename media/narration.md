@@ -33,3 +33,9 @@ The text matches the on-screen subtitles, slide by slide:
 10. Holdback pays out by itself and lets you get paid early. None of 5,428 Colosseum projects is about construction retention.
 11. We start with interviews in Shymkent, then a devnet pilot, then New Zealand and Australia.
 12. Holdback: a subcontractor's money sits with rules, not with the debtor.
+
+## How to record so it fits the video
+
+- Record each video as one take, reading the table or the numbered list above at a calm pace (about 130 words per minute). Silence at the start is fine.
+- The demo video has 10 caption beats (listed with times above). The pitch video has 12 slides of 5–12 seconds each. If your take is longer than the video, `scripts/add-voice.sh` holds the last frame; if it drifts, tell me where and I will retime the captions and re-record the video to match your voice.
+- Run: `scripts/add-voice.sh media/holdback-demo.mp4 my-demo-voice.m4a media/holdback-demo-voice.mp4`

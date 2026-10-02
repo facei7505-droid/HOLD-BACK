@@ -37,11 +37,15 @@ Works with SPL Token and Token-2022 (`token_interface`, `transfer_checked`).
 | Path | What |
 |---|---|
 | `programs/holdback/src/lib.rs` | Anchor program, 7 instructions |
-| `tests/holdback.ts` | 7 tests against a local validator |
+| `tests/holdback.ts`, `tests/edge-cases.ts` | 15 tests against a local validator |
 | `app/` | Demo server and web UI (role wallets, vault, timer, on-chain log, Blink) |
 | `deck/` | Pitch deck (source, HTML, PDF) |
 | `media/` | Demo and pitch videos, recording scripts, narration text |
 | `docs/SCORECARD.md` | Score against the evaluation rubric and the fastest improvements |
+| `docs/MARKET-MODEL.md` | Bottom-up market model, sourced vs assumed inputs |
+| `docs/INTERVIEW-KIT.md` | Interview scripts, evidence rules, letter of intent, outreach messages |
+| `docs/DEVNET.md` | Devnet deployment and the real-wallet next step |
+| `site/` | Product site with the live simulation and calculators (`demo.html`), standalone deck |
 | `target/idl/holdback.json` | Program IDL |
 
 ## Run it (Linux)
@@ -62,7 +66,7 @@ solana-test-validator --reset \
 
 # tests (second terminal)
 ANCHOR_PROVIDER_URL=http://127.0.0.1:8899 ANCHOR_WALLET=~/.config/solana/id.json \
-  npx ts-mocha -p ./tsconfig.json -t 1000000 tests/holdback.ts
+  npx ts-mocha -p ./tsconfig.json -t 1000000 'tests/*.ts'
 
 # demo UI on http://localhost:3000
 WARRANTY_SECS=55 node app/server.js
@@ -70,7 +74,7 @@ WARRANTY_SECS=55 node app/server.js
 
 ## Honest limitations
 
-- Runs on a local validator only; not deployed to devnet yet.
+- Runs on a local validator only; not deployed to devnet yet (devnet is unreachable from the build sandbox, steps in `docs/DEVNET.md`).
 - A test token stands in for USDC / KZTE.
 - The demo server signs for every role instead of a wallet like Phantom, to show the whole flow on one screen.
 - One open defect at a time, one arbiter per contract.
