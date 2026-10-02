@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Holdback pitch</title>
+<style>
+/*FONTS*/
+:root {
+  --bg: #0b0f17; --panel: #121826; --panel2: #182033; --line: #26324d;
+  --text: #eef2fa; --muted: #93a0b9; --green: #19d58a; --purple: #9b6bff; --amber: #ffb547; --red: #ff6b85; --blue: #5ab0ff;
+  --display: "Unbounded", system-ui, sans-serif; --sans: "Onest", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: #05070c; color: var(--text); font-family: var(--sans); }
+.deck { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
+.slide { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; transform-origin: center center; background: var(--bg); padding: 96px 120px; display: none; overflow: hidden; }
+.slide.on { display: flex; flex-direction: column; justify-content: center; }
+.slide::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 85% 0%, rgba(155,107,255,.16), transparent 45%), radial-gradient(circle at 0% 100%, rgba(25,213,138,.10), transparent 40%); pointer-events: none; }
+.slide > * { position: relative; }
+.kicker { font: 600 22px var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--green); margin-bottom: 22px; }
+h1 { font: 800 92px/1.05 var(--display); margin: 0 0 30px; letter-spacing: -.01em; }
+h2 { font: 700 60px/1.12 var(--display); margin: 0 0 40px; letter-spacing: -.01em; max-width: 1600px; }
+p.lead { font-size: 34px; line-height: 1.4; color: var(--muted); max-width: 1450px; margin: 0; }
+.big { font: 800 200px/1 var(--display); color: var(--amber); letter-spacing: -.03em; }
+.grid { display: grid; gap: 28px; }
+.g2 { grid-template-columns: 1fr 1fr; } .g3 { grid-template-columns: repeat(3, 1fr); } .g4 { grid-template-columns: repeat(4, 1fr); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 22px; padding: 34px; }
+.card .n { font: 800 64px/1 var(--display); margin-bottom: 14px; }
+.card .t { font-size: 27px; line-height: 1.38; color: var(--text); }
+.card .s { font-size: 20px; color: var(--muted); margin-top: 14px; line-height: 1.35; }
+.card h3 { font: 700 30px/1.2 var(--display); margin: 0 0 14px; }
+.step { font: 800 26px var(--mono); color: var(--purple); margin-bottom: 10px; }
+.src { position: absolute; left: 120px; bottom: 44px; font-size: 18px; color: #6c7894; max-width: 1680px; }
+.foot { position: absolute; right: 120px; bottom: 44px; font: 500 18px var(--mono); color: #6c7894; }
+table { width: 100%; border-collapse: collapse; font-size: 27px; }
+th { text-align: left; color: var(--muted); font-weight: 600; font-size: 21px; text-transform: uppercase; letter-spacing: .08em; padding: 0 18px 16px; }
+td { padding: 20px 18px; border-top: 1px solid var(--line); vertical-align: top; }
+.yes { color: var(--green); font-weight: 700; } .no { color: var(--red); font-weight: 700; } .meh { color: var(--amber); font-weight: 700; }
+.mono { font-family: var(--mono); }
+.pill { display: inline-block; padding: 10px 20px; border: 1px solid var(--line); border-radius: 999px; font-size: 24px; margin: 0 12px 12px 0; background: var(--panel); }
+.pill.g { border-color: var(--green); color: var(--green); } .pill.p { border-color: var(--purple); color: #c4a8ff; }
+.logo { display: flex; align-items: center; gap: 22px; margin-bottom: 70px; }
+.logo .m { width: 76px; height: 76px; border-radius: 18px; background: linear-gradient(135deg, var(--purple), var(--green)); display: grid; place-items: center; font: 800 40px var(--display); color: #0b0f17; }
+.logo .w { font: 800 44px var(--display); }
+.flowrow { display: grid; grid-template-columns: 1fr 70px 1fr 70px 1fr 70px 1fr; align-items: stretch; }
+.arrow { display: grid; place-items: center; font-size: 46px; color: var(--purple); }
+.shot { width: 100%; border-radius: 18px; border: 1px solid var(--line); box-shadow: 0 30px 80px rgba(0,0,0,.5); }
+.hl { color: var(--green); } .hp { color: #c4a8ff; } .ha { color: var(--amber); }
+.bar { height: 64px; border-radius: 14px; display: flex; overflow: hidden; font: 700 24px var(--mono); }
+.bar div { display: flex; align-items: center; padding: 0 20px; }
+#caption { position: fixed; left: 50%; bottom: 3.5vh; transform: translateX(-50%); width: min(1100px, 90vw); padding: 16px 26px; border-radius: 16px; background: rgba(5,8,14,.94); border: 1px solid var(--purple); font: 600 clamp(16px, 2.1vw, 26px)/1.35 var(--sans); text-align: center; display: none; z-index: 10; }
+.nav { position: fixed; right: 16px; bottom: 12px; font: 500 13px var(--mono); color: #6c7894; z-index: 5; }
+@media print {
+  @page { size: 1920px 1080px; margin: 0; }
+  html, body { background: var(--bg); }
+  .deck { width: auto; height: auto; overflow: visible; }
+  .slide { display: flex !important; flex-direction: column; justify-content: center; position: relative; left: 0; top: 0; transform: none !important; page-break-after: always; break-after: page; }
+  .nav, #caption { display: none !important; }
+}
+@media (max-width: 700px) { .nav { display: none; } }
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+<!-- 1 -->
+<section class="slide">
+  <div class="logo"><div class="m">H</div><div class="w">Holdback</div></div>
+  <h1>Retention money<br>nobody can <span class="hl">sit on</span></h1>
+  <p class="lead">A Solana program keeps a subcontractor's 5% in a vault owned by nobody, and releases it automatically when the warranty ends.</p>
+  <div style="margin-top:70px">
+    <span class="pill g">Stablecoin rails</span><span class="pill p">Anchor · Token-2022 · Solana Actions</span><span class="pill">First test market: Kazakhstan</span>
+  </div>
+  <div class="foot">Colosseum · 2026</div>
+</section>
+
+<!-- 2 -->
+<section class="slide">
+  <div class="kicker">The problem</div>
+  <div class="big">£8 bn</div>
+  <h2 style="margin-top:26px">of subcontractors' own money went unpaid in England over 3 years</h2>
+  <div class="grid g3" style="margin-top:50px">
+    <div class="card"><div class="n ha">44%</div><div class="t">of contractors lost retention because an upstream company went insolvent</div><div class="s">£27,300 lost per contract on average</div></div>
+    <div class="card"><div class="n ha">43%</div><div class="t">of US subcontractors wait over 90 days for final payment and retainage</div><div class="s">nearly one in five waits 6 months or more</div></div>
+    <div class="card"><div class="n ha">92%</div><div class="t">of US subcontractors floated payroll from their own pocket while waiting to be paid</div><div class="s">survey of 492 firms, May 2026</div></div>
+  </div>
+  <div class="src">Sources: Gowling WLG 2025 (UK government figures); Fenwick Elliott; Siteline "State of Subcontractor Billing 2026"</div>
+</section>
+
+<!-- 3 -->
+<section class="slide">
+  <div class="kicker">How it works today</div>
+  <h2>The client keeps 5% of every payment "as a warranty" for 1–2 years</h2>
+  <div class="bar" style="margin:10px 0 18px"><div style="flex:95;background:#1d3a66;color:#cfe3ff">$190,000 paid to the subcontractor</div><div style="flex:5;min-width:300px;background:#5a3d10;color:#ffd79a">$10,000 held back</div></div>
+  <p class="lead" style="font-size:26px">A $200,000 contract. The held-back $10,000 sits in the client's own account, mixed with their other money.</p>
+  <div class="grid g3" style="margin-top:56px">
+    <div class="card"><h3 class="ha">Delayed</h3><div class="t">The warranty ends and the answer is "next month". The subcontractor chases the money.</div></div>
+    <div class="card"><h3 class="ha">Spent</h3><div class="t">For the client it is free working capital for the next project.</div></div>
+    <div class="card"><h3 class="no">Lost</h3><div class="t">If the client goes bankrupt, the retention goes to their creditors. As happened with Carillion in 2018.</div></div>
+  </div>
+</section>
+
+<!-- 4 -->
+<section class="slide">
+  <div class="kicker">Why now</div>
+  <h2>Governments admit the problem, but their fixes are blunt</h2>
+  <div class="grid g3">
+    <div class="card"><div class="step">New Zealand · 2023</div><div class="t">Law: retention must be held in trust in a separate bank account, with a ledger per contract.</div><div class="s">Costly, and still controlled by the party that owes the money.</div></div>
+    <div class="card"><div class="step">United Kingdom · 2025</div><div class="t">After a consultation, cash retentions are to be banned, not before 2027.</div><div class="s">The client loses the quality guarantee.</div></div>
+    <div class="card"><div class="step">Kazakhstan · 2025–26</div><div class="t">KZTE tenge stablecoin pilot and a KASE × Solana Foundation MoU on tokenization.</div><div class="s">Money is arriving on-chain in the local currency.</div></div>
+  </div>
+  <p class="lead" style="margin-top:56px"><span class="hl">Holdback is the third way:</span> the retention stays, but it cannot be abused.</p>
+  <div class="src">Sources: Construction Contracts (Retention Money) Amendment Act 2023 (NZ); Kennedys and Beale &amp; Co (2025); Superteam Kazakhstan deck 2026</div>
+</section>
+
+<!-- 5 -->
+<section class="slide">
+  <div class="kicker">The solution</div>
+  <h2>Four rules enforced by a program, not by people</h2>
+  <div class="flowrow">
+    <div class="card"><div class="step">01 · SPLIT</div><div class="t">Each invoice is split in one transaction: <b class="hl">95%</b> to the subcontractor, <b class="hp">5%</b> into the vault.</div></div>
+    <div class="arrow">→</div>
+    <div class="card"><div class="step">02 · VAULT</div><div class="t">The vault is a program address with no key. The client cannot take it back.</div></div>
+    <div class="arrow">→</div>
+    <div class="card"><div class="step">03 · DEFECT</div><div class="t">Only the cost of a defect is frozen. An arbiter settles disputes.</div></div>
+    <div class="arrow">→</div>
+    <div class="card"><div class="step">04 · RELEASE</div><div class="t">After the date, <b>anyone</b> clicks a Blink and the money goes to its owner.</div></div>
+  </div>
+  <p class="lead" style="margin-top:60px">No calls, no begging, no lawsuits. The subcontractor sees the money in real time.</p>
+</section>
+
+<!-- 6 -->
+<section class="slide">
+  <div class="kicker">What a bank cannot do</div>
+  <h2>Retention becomes an asset you can sell <span class="hl">today</span></h2>
+  <div class="grid g2" style="align-items:center">
+    <div>
+      <p class="lead" style="font-size:31px">The subcontractor needs cash now, not in 2 years. They list their claim on the vault at 90%.</p>
+      <p class="lead" style="font-size:31px;margin-top:28px">A funder pays, and the claim moves to them <b class="hp">in the same transaction</b>. Nobody can take the money without handing over the claim.</p>
+      <p class="lead" style="font-size:31px;margin-top:28px">When the warranty ends, the vault pays the funder.</p>
+    </div>
+    <div class="card">
+      <table>
+        <tr><td>Subcontractor gets now</td><td class="hl mono">$4,050</td></tr>
+        <tr><td>Funder receives at the end</td><td class="hp mono">$4,500</td></tr>
+        <tr><td>Funder's return</td><td class="mono">+11%</td></tr>
+        <tr><td>Funder's risk</td><td>the money is already in the vault, not a promise to pay</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- 7 -->
+<section class="slide">
+  <div class="kicker">How we use Solana</div>
+  <h2>A real program, not a wallet button</h2>
+  <div class="grid g3">
+    <div class="card"><h3>Anchor program</h3><div class="t">7 instructions: create contract, pay with split, raise defect, resolve, list claim, buy claim, release.</div></div>
+    <div class="card"><h3>PDA vault</h3><div class="t">The vault has no private key. Only the program can sign a transfer, and only by the rules.</div></div>
+    <div class="card"><h3>Atomicity</h3><div class="t">Splitting a payment and selling a claim are single transactions: all or nothing.</div></div>
+    <div class="card"><h3>Token-2022</h3><div class="t">Works with both token standards: USDC, KZTE or any stablecoin.</div></div>
+    <div class="card"><h3>Solana Actions</h3><div class="t">The release button is a Blink: a link anyone can click.</div></div>
+    <div class="card"><h3>Cost</h3><div class="t"><span class="mono hl">0.000005 SOL</span> per action. The whole 8-transaction scenario costs a fraction of a cent.</div></div>
+  </div>
+  <div class="src">Open source · 7 automated tests pass on a local Solana validator (solana-test-validator 2.3, Anchor 0.31)</div>
+</section>
+
+<!-- 8 -->
+<section class="slide" style="padding:70px 120px">
+  <div class="kicker">Working demo</div>
+  <img class="shot" src="/*SHOT*/" alt="Holdback demo screen">
+</section>
+
+<!-- 9 -->
+<section class="slide">
+  <div class="kicker">Market</div>
+  <h2>Retention is standard on construction sites almost everywhere</h2>
+  <table>
+    <tr><th>Country</th><th>Called</th><th>Typical size</th><th>What we know</th></tr>
+    <tr><td>England</td><td>retention</td><td class="mono">3–5%</td><td><b class="ha">£3.2–5.9 bn</b> is held at any time during a year</td></tr>
+    <tr><td>United States</td><td>retainage</td><td class="mono">5–10%</td><td>43% of subcontractors wait over 90 days</td></tr>
+    <tr><td>New Zealand</td><td>retention money</td><td class="mono">5–10%</td><td>law requires a separate trust account</td></tr>
+    <tr><td>Canada</td><td>holdback</td><td class="mono">10%</td><td>statutory holdback in provincial law</td></tr>
+    <tr><td>Russia, Kazakhstan</td><td>warranty retention</td><td class="mono">5%</td><td>a common clause in contractor agreements (Kazakhstan to be verified by interviews)</td></tr>
+  </table>
+  <p class="lead" style="margin-top:40px;font-size:28px">Model (hypothesis): <b>0.5%</b> of held amount from the client plus a fee on claim sales.</p>
+  <div class="src">Sources: Fenwick Elliott; Siteline 2026; NZ Act 2023. Typical sizes in the US, Canada and NZ are indicative and need verification</div>
+</section>
+
+<!-- 10 -->
+<section class="slide">
+  <div class="kicker">Alternatives</div>
+  <h2>Why this beats what exists</h2>
+  <table>
+    <tr><th></th><th>Client's own account</th><th>Bank trust account</th><th>Ban on retention</th><th>Holdback</th></tr>
+    <tr><td>Protected from bankruptcy</td><td class="no">no</td><td class="yes">yes</td><td class="meh">n/a</td><td class="yes">yes*</td></tr>
+    <tr><td>Paid out without asking</td><td class="no">no</td><td class="no">no</td><td class="meh">n/a</td><td class="yes">yes</td></tr>
+    <tr><td>Subcontractor sees the money</td><td class="no">no</td><td class="meh">on request</td><td class="meh">n/a</td><td class="yes">in real time</td></tr>
+    <tr><td>Client keeps the quality guarantee</td><td class="yes">yes</td><td class="yes">yes</td><td class="no">no</td><td class="yes">yes</td></tr>
+    <tr><td>Cash before the warranty ends</td><td class="no">no</td><td class="no">no</td><td class="meh">n/a</td><td class="yes">sell the claim</td></tr>
+  </table>
+  <p class="lead" style="margin-top:36px;font-size:26px">Among 5,428 projects in the Colosseum database, none is about construction retention.</p>
+  <div class="src">* the money is outside the client's account; how a court treats it in a bankruptcy has not been tested</div>
+</section>
+
+<!-- 11 -->
+<section class="slide">
+  <div class="kicker">Plan</div>
+  <h2>From Shymkent to countries where the law demands it</h2>
+  <div class="grid g3">
+    <div class="card"><div class="step">Now</div><div class="t">10 interviews: 7 subcontractors and 3 developers in Shymkent. Goal: 2–3 letters of intent.</div></div>
+    <div class="card"><div class="step">5 weeks</div><div class="t">Devnet pilot on one real contract with test money, plus an auditor dashboard.</div></div>
+    <div class="card"><div class="step">Next</div><div class="t">New Zealand and Australia: a cheaper way to comply with trust-account laws. Then the US.</div></div>
+  </div>
+  <div class="grid g2" style="margin-top:40px">
+    <div class="card"><h3 class="ha">Biggest risk</h3><div class="t">Clients benefit from holding the money. Our answer: the law (NZ), better subcontractors, and an alternative to the UK ban.</div></div>
+    <div class="card"><h3 class="ha">Not yet verified</h3><div class="t">How often retention is delayed in Kazakhstan, and what a developer would pay. This is what we learn first.</div></div>
+  </div>
+</section>
+
+<!-- 12 -->
+<section class="slide">
+  <div class="logo"><div class="m">H</div><div class="w">Holdback</div></div>
+  <h1 style="font-size:84px">A subcontractor's money<br>sits with <span class="hl">rules</span>, not<br>with the debtor</h1>
+  <p class="lead">We are looking for 3 developers and 10 subcontractors for a pilot in Kazakhstan.</p>
+  <div style="margin-top:60px"><span class="pill g">Demo works</span><span class="pill p">7 tests pass</span><span class="pill">Open source</span></div>
+  <div class="foot">Colosseum · 2026</div>
+</section>
+
+</div>
+<div id="caption"></div>
+<div class="nav" id="nav"></div>
+<script>
+const slides = [...document.querySelectorAll('.slide')];
+let i = Math.max(0, Math.min(slides.length - 1, (parseInt(new URLSearchParams(location.search).get('s')) || 1) - 1));
+function fit() {
+  const k = Math.min(innerWidth / 1920, innerHeight / 1080);
+  slides.forEach((s) => (s.style.transform = `translate(-50%, -50%) scale(${k})`));
+}
+function show(n) {
+  i = Math.max(0, Math.min(slides.length - 1, n));
+  slides.forEach((s, j) => s.classList.toggle('on', j === i));
+  document.getElementById('nav').textContent = `${i + 1} / ${slides.length} · ← →`;
+}
+window.go = (n) => show(n - 1);
+window.setCaption = (t) => { const c = document.getElementById('caption'); c.textContent = t || ''; c.style.display = t ? 'block' : 'none'; document.getElementById('nav').style.display = 'none'; };
+addEventListener('keydown', (e) => { if (['ArrowRight', ' ', 'PageDown'].includes(e.key)) show(i + 1); if (['ArrowLeft', 'PageUp'].includes(e.key)) show(i - 1); });
+document.getElementById('deck').addEventListener('click', (e) => show(e.clientX > innerWidth / 3 ? i + 1 : i - 1));
+addEventListener('resize', fit); fit(); show(i);
+</script>
+</body>
+</html>

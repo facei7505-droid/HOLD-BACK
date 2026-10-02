@@ -1,0 +1,10 @@
+node_modules/
+target/*
+!target/idl/
+!target/types/
+.anchor/
+test-ledger/
+*.log
+.DS_Store
+# program keypair is generated locally with `anchor keys sync`
+**/*-keypair.json

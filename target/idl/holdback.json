@@ -1,0 +1,1062 @@
+{
+  "address": "6t4LfjbFTBDVhmNypAsHYSvaKdpBNmWLpDaF3G8nZrvB",
+  "metadata": {
+    "name": "holdback",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Construction retention money locked in a program vault and released automatically"
+  },
+  "instructions": [
+    {
+      "name": "buy_claim",
+      "docs": [
+        "A funder buys the claim: pays the holder and becomes the beneficiary",
+        "in the same transaction, so neither side can be cheated."
+      ],
+      "discriminator": [
+        168,
+        110,
+        230,
+        142,
+        141,
+        246,
+        67,
+        232
+      ],
+      "accounts": [
+        {
+          "name": "buyer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "contract",
+          "writable": true
+        },
+        {
+          "name": "mint",
+          "relations": [
+            "contract"
+          ]
+        },
+        {
+          "name": "buyer_token",
+          "writable": true
+        },
+        {
+          "name": "seller_token",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "max_price",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "create_contract",
+      "docs": [
+        "Client opens a contract with a subcontractor and an arbiter."
+      ],
+      "discriminator": [
+        244,
+        48,
+        244,
+        178,
+        216,
+        88,
+        122,
+        52
+      ],
+      "accounts": [
+        {
+          "name": "client",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "subcontractor"
+        },
+        {
+          "name": "arbiter"
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "contract",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  116,
+                  114,
+                  97,
+                  99,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "client"
+              },
+              {
+                "kind": "arg",
+                "path": "contract_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "contract"
+              },
+              {
+                "kind": "account",
+                "path": "token_program"
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "contract_id",
+          "type": "u64"
+        },
+        {
+          "name": "retention_bps",
+          "type": "u16"
+        },
+        {
+          "name": "warranty_secs",
+          "type": "i64"
+        },
+        {
+          "name": "title",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "list_claim",
+      "docs": [
+        "The current claim holder offers the locked retention for sale.",
+        "price = 0 removes the offer."
+      ],
+      "discriminator": [
+        170,
+        28,
+        51,
+        91,
+        64,
+        103,
+        21,
+        4
+      ],
+      "accounts": [
+        {
+          "name": "beneficiary",
+          "signer": true,
+          "relations": [
+            "contract"
+          ]
+        },
+        {
+          "name": "contract",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "price",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "pay_progress",
+      "docs": [
+        "Client pays an invoice. One transaction, two transfers:",
+        "the subcontractor's share and the retention into the vault."
+      ],
+      "discriminator": [
+        172,
+        18,
+        92,
+        4,
+        154,
+        242,
+        59,
+        175
+      ],
+      "accounts": [
+        {
+          "name": "client",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "contract"
+          ]
+        },
+        {
+          "name": "contract",
+          "writable": true
+        },
+        {
+          "name": "mint",
+          "relations": [
+            "contract"
+          ]
+        },
+        {
+          "name": "client_token",
+          "writable": true
+        },
+        {
+          "name": "subcontractor_token",
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "contract"
+              },
+              {
+                "kind": "account",
+                "path": "token_program"
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "raise_defect",
+      "docs": [
+        "Client reports a defect before the warranty ends. Only the cost of the",
+        "defect is frozen, the rest of the retention stays on its way out."
+      ],
+      "discriminator": [
+        254,
+        189,
+        86,
+        22,
+        254,
+        108,
+        64,
+        178
+      ],
+      "accounts": [
+        {
+          "name": "client",
+          "signer": true,
+          "relations": [
+            "contract"
+          ]
+        },
+        {
+          "name": "contract",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "evidence_hash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "release",
+      "docs": [
+        "After the warranty date anyone can release the retention to the",
+        "current beneficiary. No calls, no reminders, no permission needed."
+      ],
+      "discriminator": [
+        253,
+        249,
+        15,
+        206,
+        28,
+        127,
+        193,
+        241
+      ],
+      "accounts": [
+        {
+          "name": "caller",
+          "docs": [
+            "Anyone: the subcontractor, a bot, a stranger in the audience."
+          ],
+          "signer": true
+        },
+        {
+          "name": "contract",
+          "writable": true
+        },
+        {
+          "name": "mint",
+          "relations": [
+            "contract"
+          ]
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "contract"
+              },
+              {
+                "kind": "account",
+                "path": "token_program"
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "beneficiary_token",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "resolve_defect",
+      "docs": [
+        "Arbiter settles an open defect: either the frozen amount pays for the",
+        "repair (goes to the client) or it is unfrozen for the subcontractor."
+      ],
+      "discriminator": [
+        183,
+        52,
+        108,
+        28,
+        204,
+        142,
+        201,
+        58
+      ],
+      "accounts": [
+        {
+          "name": "arbiter",
+          "signer": true,
+          "relations": [
+            "contract"
+          ]
+        },
+        {
+          "name": "contract",
+          "writable": true
+        },
+        {
+          "name": "mint",
+          "relations": [
+            "contract"
+          ]
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "contract"
+              },
+              {
+                "kind": "account",
+                "path": "token_program"
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "client_token",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "pay_client",
+          "type": "bool"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Contract",
+      "discriminator": [
+        172,
+        138,
+        115,
+        242,
+        121,
+        67,
+        183,
+        26
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "ClaimListed",
+      "discriminator": [
+        149,
+        25,
+        205,
+        144,
+        73,
+        136,
+        112,
+        102
+      ]
+    },
+    {
+      "name": "ClaimSold",
+      "discriminator": [
+        204,
+        81,
+        156,
+        170,
+        171,
+        111,
+        145,
+        20
+      ]
+    },
+    {
+      "name": "ContractCreated",
+      "discriminator": [
+        80,
+        69,
+        164,
+        109,
+        77,
+        15,
+        47,
+        164
+      ]
+    },
+    {
+      "name": "DefectRaised",
+      "discriminator": [
+        177,
+        176,
+        145,
+        88,
+        69,
+        66,
+        107,
+        110
+      ]
+    },
+    {
+      "name": "DefectResolved",
+      "discriminator": [
+        77,
+        0,
+        220,
+        230,
+        46,
+        101,
+        206,
+        28
+      ]
+    },
+    {
+      "name": "ProgressPaid",
+      "discriminator": [
+        162,
+        35,
+        182,
+        191,
+        121,
+        38,
+        179,
+        79
+      ]
+    },
+    {
+      "name": "Released",
+      "discriminator": [
+        232,
+        229,
+        255,
+        136,
+        101,
+        189,
+        15,
+        220
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "BadRetention",
+      "msg": "Retention must be between 0.01% and 20%"
+    },
+    {
+      "code": 6001,
+      "name": "BadWarranty",
+      "msg": "Warranty period must be positive"
+    },
+    {
+      "code": 6002,
+      "name": "TitleTooLong",
+      "msg": "Title is too long"
+    },
+    {
+      "code": 6003,
+      "name": "ZeroAmount",
+      "msg": "Amount must be greater than zero"
+    },
+    {
+      "code": 6004,
+      "name": "Overflow",
+      "msg": "Arithmetic overflow"
+    },
+    {
+      "code": 6005,
+      "name": "NotActive",
+      "msg": "Contract is not active"
+    },
+    {
+      "code": 6006,
+      "name": "WarrantyOver",
+      "msg": "Warranty period is already over"
+    },
+    {
+      "code": 6007,
+      "name": "WarrantyNotOver",
+      "msg": "Warranty period is not over yet"
+    },
+    {
+      "code": 6008,
+      "name": "DefectOpen",
+      "msg": "A defect is already open"
+    },
+    {
+      "code": 6009,
+      "name": "NoDefect",
+      "msg": "No open defect"
+    },
+    {
+      "code": 6010,
+      "name": "BadDefectAmount",
+      "msg": "Defect amount must be positive and not exceed the locked retention"
+    },
+    {
+      "code": 6011,
+      "name": "NotForSale",
+      "msg": "Claim is not for sale"
+    },
+    {
+      "code": 6012,
+      "name": "PriceChanged",
+      "msg": "Price changed, transaction cancelled"
+    },
+    {
+      "code": 6013,
+      "name": "AlreadyOwner",
+      "msg": "Buyer already owns the claim"
+    }
+  ],
+  "types": [
+    {
+      "name": "ClaimListed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "contract",
+            "type": "pubkey"
+          },
+          {
+            "name": "price",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ClaimSold",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "contract",
+            "type": "pubkey"
+          },
+          {
+            "name": "seller",
+            "type": "pubkey"
+          },
+          {
+            "name": "buyer",
+            "type": "pubkey"
+          },
+          {
+            "name": "price",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Contract",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "client",
+            "type": "pubkey"
+          },
+          {
+            "name": "subcontractor",
+            "type": "pubkey"
+          },
+          {
+            "name": "beneficiary",
+            "docs": [
+              "Who receives the retention at release. Starts as the subcontractor,",
+              "changes when the claim is sold."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "arbiter",
+            "type": "pubkey"
+          },
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "contract_id",
+            "type": "u64"
+          },
+          {
+            "name": "retention_bps",
+            "type": "u16"
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          },
+          {
+            "name": "warranty_end",
+            "type": "i64"
+          },
+          {
+            "name": "total_paid",
+            "type": "u64"
+          },
+          {
+            "name": "retained",
+            "type": "u64"
+          },
+          {
+            "name": "frozen",
+            "type": "u64"
+          },
+          {
+            "name": "paid_out_to_client",
+            "type": "u64"
+          },
+          {
+            "name": "released",
+            "type": "u64"
+          },
+          {
+            "name": "defect_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "ask_price",
+            "type": "u64"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "Status"
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "title",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ContractCreated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "contract",
+            "type": "pubkey"
+          },
+          {
+            "name": "client",
+            "type": "pubkey"
+          },
+          {
+            "name": "subcontractor",
+            "type": "pubkey"
+          },
+          {
+            "name": "retention_bps",
+            "type": "u16"
+          },
+          {
+            "name": "warranty_end",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DefectRaised",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "contract",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "evidence_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "DefectResolved",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "contract",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "paid_client",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ProgressPaid",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "contract",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "to_subcontractor",
+            "type": "u64"
+          },
+          {
+            "name": "retained",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Released",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "contract",
+            "type": "pubkey"
+          },
+          {
+            "name": "beneficiary",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "triggered_by",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Status",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Active"
+          },
+          {
+            "name": "Released"
+          }
+        ]
+      }
+    }
+  ]
+}
