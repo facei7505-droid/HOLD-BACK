@@ -34,13 +34,13 @@ If the unknown demand criterion is counted as 0: 205 / 100 = 2.05, still yellow.
 
 | Action | Time | Criteria | Gain |
 |---|---|---|---|
-| 10 interviews (7 subcontractors, 3 developers), asking for concrete actions: show the retention clause, say how much is stuck and for how long, sign a letter of intent | 3–5 days | 2 → 3, 7 → 3, 1 → 4, 5 → 3, 9 → 3 | +45 +20 +15 +10 +5 = **+95 points** (about +0.95 on the final score) |
+| 10 interviews (7 subcontractors, 3 developers), asking for concrete actions: show the retention clause, say how much is stuck and for how long, sign a letter of intent | 3–5 days | 2 → 3, 7 → 3, 1 → 4, 5 → 3, 9 → 3 | +45 +20 +15 +10 +5 = **+95 points** (counting the unknown demand criterion as 0 today) |
 | Deploy to devnet with a real wallet (Phantom) and a public URL, replace the server-signed roles | 1–2 days | 6 → 4 | +15 |
-| Bottom-up market estimate: number of firms × average contract × retention % × average months held | 0.5 day | 3 → 3 | +10 |
+| Bottom-up market estimate: number of firms × average contract × retention % × average months held | 0.5 day | 3: 2 → 3 | +10 |
 | Add a construction advisor (even one person) to the team slide | 1 day | 8 → 2 | +5 |
 | Share yield on locked funds between client and subcontractor (lending protocol integration) to answer "why would a client agree" | 3–4 days | 5, 9 | +10 |
 
-**If the first three are done: about 315 / 100 = 3.15, green.**
+**If the first three are done: 205 + 95 + 15 + 10 = 325 / 100 = 3.25, green.** Adding the advisor makes 330.
 
 ## Why it can compete at Colosseum (honest view)
 
