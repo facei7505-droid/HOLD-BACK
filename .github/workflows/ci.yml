@@ -1,0 +1,101 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  SOLANA_VERSION: 2.3.13
+  PROGRAM_ID: F3qhQqGxVpjDPndPx4KhwoAdvxbmUchQotYFe8zWxARt
+
+jobs:
+  repo:
+    name: Repository checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Required files
+        run: |
+          for f in README.md LICENSE CONTRIBUTING.md SECURITY.md .env.example \
+                   docs/architecture.md docs/api.md docs/product.md docs/roadmap.md \
+                   target/idl/holdback.json site/index.html; do
+            test -e "$f" && echo "✓ $f" || { echo "✗ missing $f"; exit 1; }
+          done
+
+      - name: Program id is the same everywhere
+        run: |
+          grep -q "declare_id!(\"$PROGRAM_ID\")" programs/holdback/src/lib.rs
+          grep -q "\"address\": \"$PROGRAM_ID\"" target/idl/holdback.json
+          grep -q "holdback = \"$PROGRAM_ID\"" Anchor.toml
+          echo "✓ $PROGRAM_ID"
+
+      - name: No private voice recordings or keypairs committed
+        run: |
+          if git ls-files | grep -E '(^media/voice/|-voice[^/]*\.mp4$|-keypair\.json$|(^|/)\.env$)'; then
+            echo "✗ private file tracked"; exit 1
+          fi
+          echo "✓ clean"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: JavaScript syntax
+        run: for f in app/*.js site/sim.js media/*.js; do node --check "$f"; done
+
+  program:
+    name: Build program and run tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Cache Solana CLI and platform tools
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/solana-release
+            ~/.cache/solana
+          key: solana-${{ env.SOLANA_VERSION }}
+
+      - name: Install Solana CLI
+        run: |
+          if [ ! -x ~/solana-release/bin/solana ]; then
+            curl -sSfL "https://github.com/anza-xyz/agave/releases/download/v${SOLANA_VERSION}/solana-release-x86_64-unknown-linux-gnu.tar.bz2" | tar -xj -C ~
+          fi
+          echo "$HOME/solana-release/bin" >> "$GITHUB_PATH"
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target/sbf-solana-solana
+            target/release
+          key: cargo-${{ hashFiles('Cargo.lock') }}
+
+      - name: Build program
+        run: |
+          solana --version
+          cd programs/holdback && cargo-build-sbf
+          ls -l ../../target/deploy/holdback.so
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Run tests on a local validator
+        run: |
+          solana-keygen new --no-bip39-passphrase --silent -o ~/.config/solana/id.json
+          solana-test-validator --reset --quiet \
+            --bpf-program "$PROGRAM_ID" target/deploy/holdback.so &
+          for i in $(seq 1 60); do solana cluster-version -u localhost >/dev/null 2>&1 && break; sleep 1; done
+          ANCHOR_PROVIDER_URL=http://127.0.0.1:8899 ANCHOR_WALLET=$HOME/.config/solana/id.json npm test

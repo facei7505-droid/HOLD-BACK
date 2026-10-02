@@ -3,7 +3,8 @@
   "private": true,
   "scripts": {
     "test": "ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts",
-    "build:site": "esbuild app/devnet-client.js --bundle --minify --format=iife --platform=browser --target=es2020 --inject:app/buffer-shim.js --define:process.env.ANCHOR_BROWSER=true --define:global=globalThis --outfile=site/devnet.js"
+    "build:site": "esbuild app/devnet-client.js --bundle --minify --format=iife --platform=browser --target=es2020 --inject:app/buffer-shim.js --define:process.env.ANCHOR_BROWSER=true --define:global=globalThis --outfile=site/devnet.js",
+    "demo": "node --env-file=.env app/server.js"
   },
   "dependencies": {
     "@coral-xyz/anchor": "0.31.1",

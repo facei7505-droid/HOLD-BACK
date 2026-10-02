@@ -12,3 +12,6 @@ test-ledger/
 # user voice recordings and voiced videos stay private
 media/voice/
 media/*-voice*.mp4
+
+# local environment
+.env

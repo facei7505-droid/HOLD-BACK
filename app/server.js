@@ -14,6 +14,8 @@ const RPC = process.env.RPC_URL || "http://127.0.0.1:8899";
 const PORT = Number(process.env.PORT || 3000);
 const WARRANTY_SECS = Number(process.env.WARRANTY_SECS || 25);
 const ARBITER_WINDOW_SECS = Number(process.env.ARBITER_WINDOW_SECS || 3600);
+// CAIP-2 chain id for the Solana Actions header; devnet when the RPC points there
+const CHAIN_ID = /devnet/.test(RPC) ? "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1" : "solana:localnet";
 const idl = JSON.parse(fs.readFileSync(path.join(__dirname, "../target/idl/holdback.json"), "utf8"));
 const conn = new Connection(RPC, "confirmed");
 const TP = spl.TOKEN_2022_PROGRAM_ID;
@@ -202,7 +204,7 @@ const server = http.createServer(async (req, res) => {
       "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type, Authorization, Content-Encoding, Accept-Encoding",
       "X-Action-Version": "2.4",
-      "X-Blockchain-Ids": "solana:localnet",
+      "X-Blockchain-Ids": CHAIN_ID,
     });
     res.end(typeof obj === "string" || Buffer.isBuffer(obj) ? obj : JSON.stringify(obj));
   };

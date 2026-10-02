@@ -11,10 +11,10 @@ A Solana program that splits every construction payment into "paid now" and "loc
 The point is that nobody controls the vault: the program owns it. A bank trust account or a database needs a party you trust, and the whole problem is that the client cannot be trusted with the money. Fees are about $0.000005 per action, so small contracts are possible. See [THREAT-MODEL.md](THREAT-MODEL.md) for what that claim depends on (including the upgrade authority).
 
 **What is working today?**
-The program, 15 passing tests on a local validator, a demo UI and a Solana Action ("Blink") for release, and a simulation site. See the [scorecard](SCORECARD.md) for what is not done.
+The program deployed on devnet, 22 passing tests (run by CI on every push), a site where you can run the whole flow on devnet with Phantom, a Solana Action ("Blink") for release, and a simulation. See the [scorecard](SCORECARD.md) for what is not done.
 
 **What is not done?**
-No customers or interviews yet. Not audited. Devnet and a real wallet are being finished. Test token on the local demo, not real money. No fee mechanism in the program yet.
+No customers or interviews yet. Not audited. Devnet only, with a test token instead of real money; only the client role signs with Phantom, the other roles are throwaway browser keypairs. No fee mechanism in the program yet.
 
 ## Why a client would agree
 
@@ -60,7 +60,7 @@ Retention bonds and insurance (cost the subcontractor or client money, still dep
 Students, no construction experience yet. We are recruiting one construction or legal advisor ([ADVISOR-OUTREACH.md](ADVISOR-OUTREACH.md)).
 
 **What are you doing in the next 30 days?**
-Ten interviews (seven subcontractors, three developers) with letters of intent, devnet deployment with Phantom, a legal opinion request, a security review by an outside developer. See [INTERVIEW-KIT.md](INTERVIEW-KIT.md).
+Ten interviews (seven subcontractors, three developers) with letters of intent, a wallet per role on devnet, a legal opinion request, a security review by an outside developer. See [INTERVIEW-KIT.md](INTERVIEW-KIT.md).
 
 **What would make you stop?**
 If most clients say "I will not lock money for any fee" and subcontractors will not pay to be paid on time, the product has no payer. Then we would pivot to the financing side only (claim sales), or stop.

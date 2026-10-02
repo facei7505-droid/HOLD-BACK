@@ -1,6 +1,6 @@
 # Deploying to devnet
 
-The sandbox this project was built in cannot reach Solana devnet, so the program has only run on a local validator. Run this on your own machine (Solana CLI 2.3, Anchor 0.31.1).
+The program is live on devnet (see [Current devnet deployment](#current-devnet-deployment) below). These steps deploy your own copy; run them on your own machine (Solana CLI 2.3, Anchor 0.31.1).
 
 ```bash
 solana config set --url devnet
@@ -24,7 +24,7 @@ Notes: the tests airdrop SOL to their own wallets, which devnet rate-limits; fun
 
 ## Next step for a real wallet
 
-Replace the server-signed roles with Phantom through `@solana/wallet-adapter`: keep `app/server.js` only for the Blink (`/api/actions/release`), and sign `createContract`, `acceptContract` (as the subcontractor), `payProgress`, `raiseDefect`, `listClaim` and `buyClaim` in the browser with the connected wallet. The IDL in `target/idl/holdback.json` is all the client needs.
+Done for the client role: the site's devnet mode signs with Phantom (see below). What remains is letting each role use its own wallet instead of throwaway browser keypairs, through `@solana/wallet-adapter`: keep `app/server.js` only for the Blink (`/api/actions/release`), and sign `createContract`, `acceptContract` (as the subcontractor), `payProgress`, `raiseDefect`, `listClaim` and `buyClaim` in the browser with the connected wallet. The IDL in `target/idl/holdback.json` is all the client needs.
 
 ## Using a real stablecoin instead of the test token
 
