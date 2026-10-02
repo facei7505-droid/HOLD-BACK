@@ -1,0 +1,328 @@
+<title>Holdback Demo</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0b0f17; --panel: #121826; --panel2: #182033; --line: #24304a;
+    --text: #e8edf7; --muted: #8b97b0; --green: #19d58a; --purple: #9b6bff;
+    --amber: #ffb547; --red: #ff5c7a; --blue: #4aa8ff;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding-inline: 0; background: var(--bg); color: var(--text); font: 15px/1.4 Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { display: flex; align-items: center; gap: 14px; padding: 14px 22px; border-bottom: 1px solid var(--line); }
+  .logo { width: 34px; height: 34px; border-radius: 9px; background: linear-gradient(135deg, var(--purple), var(--green)); display: grid; place-items: center; font-weight: 800; color: #0b0f17; }
+  header h1 { font-size: 20px; margin: 0; }
+  header .tag { color: var(--muted); }
+  header .net { margin-left: auto; font-size: 12px; color: var(--muted); border: 1px solid var(--line); padding: 5px 10px; border-radius: 999px; }
+  header .net b { color: var(--green); }
+  main { display: grid; grid-template-columns: 1.25fr 1fr 1fr; gap: 16px; padding: 16px 22px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+  .panel h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 12px; }
+  .title { font-size: 17px; font-weight: 600; margin-bottom: 4px; }
+  .sub { color: var(--muted); font-size: 13px; }
+  .vault { margin: 16px 0; padding: 18px; border-radius: 14px; background: radial-gradient(circle at 20% 0%, rgba(155,107,255,.25), transparent 60%), var(--panel2); border: 1px solid var(--line); position: relative; overflow: hidden; }
+  .vault .lbl { color: var(--muted); font-size: 13px; display: flex; align-items: center; gap: 8px; }
+  .vault .amt { font-size: 40px; font-weight: 800; letter-spacing: -.02em; margin-top: 4px; transition: color .3s; }
+  .vault.pulse .amt { color: var(--green); }
+  .vault .row { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+  .chip { font-size: 12px; padding: 4px 9px; border-radius: 999px; background: #0e1422; border: 1px solid var(--line); }
+  .chip.frozen { border-color: var(--amber); color: var(--amber); }
+  .chip.owner { border-color: var(--green); color: var(--green); }
+  .chip.done { border-color: var(--green); background: rgba(25,213,138,.12); color: var(--green); }
+  .timer { display: flex; align-items: center; gap: 14px; }
+  .ring { width: 74px; height: 74px; }
+  .timer .big { font-size: 22px; font-weight: 700; }
+  .flow { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .flow .box { padding: 10px; border-radius: 10px; background: var(--panel2); border: 1px solid var(--line); }
+  .flow .box b { display: block; font-size: 18px; }
+  .flow .box.sub b { color: var(--blue); }
+  .flow .box.vlt b { color: var(--purple); }
+  .flow .box.flash { animation: flash 1.2s ease; }
+  @keyframes flash { 0% { box-shadow: 0 0 0 0 rgba(25,213,138,.9); } 100% { box-shadow: 0 0 0 14px rgba(25,213,138,0); } }
+  .role { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-radius: 10px; background: var(--panel2); border: 1px solid var(--line); margin-bottom: 8px; transition: border-color .3s; }
+  .role .n { font-weight: 600; font-size: 14px; }
+  .role .k { color: var(--muted); font-size: 11px; font-family: ui-monospace, monospace; }
+  .role .b { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .role.up { border-color: var(--green); }
+  .role.down { border-color: var(--red); }
+  .btn { display: block; width: 100%; text-align: left; padding: 10px 12px; margin-bottom: 8px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel2); color: var(--text); font: inherit; cursor: pointer; }
+  .btn:hover { border-color: var(--purple); }
+  .btn small { display: block; color: var(--muted); font-size: 11px; }
+  .btn.active { border-color: var(--green); box-shadow: 0 0 0 2px rgba(25,213,138,.3); }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .blink { margin-top: 12px; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: #0e1422; }
+  .blink .img { height: 64px; background: linear-gradient(120deg, #2b1a55, #0f3d33); display: flex; align-items: center; justify-content: center; font-weight: 800; letter-spacing: .04em; }
+  .blink .body { padding: 10px 12px; }
+  .blink .url { color: var(--muted); font-size: 11px; }
+  .blink .t { font-weight: 700; margin: 2px 0; }
+  .blink .d { font-size: 12px; color: var(--muted); min-height: 34px; }
+  .blink button { margin-top: 8px; width: 100%; padding: 10px; border-radius: 10px; border: 0; background: var(--purple); color: white; font: inherit; font-weight: 700; cursor: pointer; }
+  .blink button:disabled { background: #2a3350; color: var(--muted); cursor: default; }
+  .log { grid-column: 1 / -1; }
+  .log table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .log td { padding: 7px 8px; border-top: 1px solid var(--line); vertical-align: top; }
+  .log td.sig { font-family: ui-monospace, monospace; color: var(--blue); white-space: nowrap; }
+  .log td.fee { color: var(--green); white-space: nowrap; }
+  .log td.who { color: var(--muted); white-space: nowrap; }
+  .toast { position: fixed; right: 22px; top: 70px; background: var(--red); color: white; padding: 10px 14px; border-radius: 10px; display: none; max-width: 420px; }
+  #caption { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); max-width: 1000px; padding: 14px 22px; border-radius: 14px; background: rgba(5,8,14,.92); border: 1px solid var(--purple); font-size: 22px; font-weight: 600; text-align: center; display: none; z-index: 10; box-shadow: 0 10px 40px rgba(0,0,0,.5); }
+  @media (max-width: 1000px) { main { grid-template-columns: 1fr; } }
+  .sim-note { margin: 12px 22px 0; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--muted); font-size: 13px; }
+  .sim-note b { color: var(--text); } .sim-note a { color: var(--blue); }
+  @media (max-width: 640px) { header { flex-wrap: wrap; padding: 12px 16px; } header .net { margin-left: 0; } main { padding: 12px 16px; } .sim-note { margin: 12px 16px 0; } }
+  .panel { min-width: 0; } .log { overflow-x: auto; } .log table { min-width: 560px; } .role .n { overflow-wrap: anywhere; } .toast { left: 16px; right: 16px; max-width: none; }
+  button:focus-visible { outline: 2px solid var(--purple); outline-offset: 2px; }
+</style>
+
+<header>
+  <div class="logo">H</div>
+  <h1>Holdback</h1>
+  <span class="tag">Retention money nobody can sit on</span>
+  <span class="net">Simulation · program <span id="pid">…</span></span>
+</header>
+<div class="sim-note"><b>Interactive simulation.</b> This page runs the rules of the Holdback program in your browser, so you can click through the whole flow. The real Anchor program runs on a Solana local validator with 7 passing tests: see the videos and the <a href="https://github.com/facei7505-droid/HOLD-BACK" target="_blank" rel="noopener">GitHub repository</a>.</div>
+<main>
+  <section class="panel">
+    <h2>Contract</h2>
+    <div class="title" id="ctitle">No contract yet</div>
+    <div class="sub" id="csub">Click "Create contract"</div>
+    <div class="vault" id="vault">
+      <div class="lbl">🔒 Program vault (owned by nobody)</div>
+      <div class="amt"><span id="vamt">0</span></div>
+      <div class="row">
+        <span class="chip" id="cpaid">Paid by invoices: $0</span>
+        <span class="chip frozen" id="cfrozen" style="display:none"></span>
+        <span class="chip owner" id="cowner" style="display:none"></span>
+        <span class="chip" id="cask" style="display:none"></span>
+        <span class="chip done" id="cdone" style="display:none"></span>
+      </div>
+    </div>
+    <div class="timer">
+      <svg class="ring" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9" fill="none" stroke="#24304a" stroke-width="3"/><circle id="arc" cx="18" cy="18" r="15.9" fill="none" stroke="#9b6bff" stroke-width="3" stroke-linecap="round" stroke-dasharray="100 100" stroke-dashoffset="100" transform="rotate(-90 18 18)"/></svg>
+      <div><div class="sub">Warranty ends in</div><div class="big" id="tleft">—</div><div class="sub">seconds in the demo, 1–2 years in real life</div></div>
+    </div>
+    <div class="flow">
+      <div class="box sub" id="fsub"><span class="sub">Last invoice → subcontractor (95%)</span><b id="lsub">—</b></div>
+      <div class="box vlt" id="fvlt"><span class="sub">Last invoice → vault (5%)</span><b id="lvlt">—</b></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Participant wallets (test USDC)</h2>
+    <div id="roles"></div>
+    <h2 style="margin-top:18px">Why Solana</h2>
+    <div class="flow" style="margin-top:0">
+      <div class="box"><span class="sub">Transactions on-chain</span><b id="stx">0</b></div>
+      <div class="box"><span class="sub">All fees together</span><b id="sfee" style="color:var(--green)">0 SOL</b></div>
+    </div>
+    <div class="sub" style="margin-top:8px">Every action confirms in seconds and costs a fraction of a cent, with no bank in between.</div>
+  </section>
+
+  <section class="panel">
+    <h2>Actions</h2>
+    <button class="btn" data-a="create">1. Create contract<small>Developer · 5% retention</small></button>
+    <button class="btn" data-a="pay" data-p='{"amount":50000}'>2. Pay invoice $50,000<small>Developer · the program splits the payment</small></button>
+    <button class="btn" data-a="defect" data-p='{"amount":500}'>3. Report a $500 defect<small>Developer · only the repair cost is frozen</small></button>
+    <button class="btn" data-a="resolve" data-p='{"payClient":true}'>4. Settle the dispute<small>Arbiter · $500 goes to repair</small></button>
+    <button class="btn" data-a="list">5. Sell the retention now at 90%<small>Subcontractor · cash today, not in 2 years</small></button>
+    <button class="btn" data-a="buy">6. Buy the claim<small>Funder · payment and ownership change atomically</small></button>
+    <button class="btn" data-a="early">Try to take it back early<small>Developer · the program should refuse</small></button>
+    <button class="btn" data-a="reset">Reset the demo<small>Start over with fresh wallets</small></button>
+    <div class="blink">
+      <div class="img">HOLDBACK · SOLANA ACTION</div>
+      <div class="body">
+        <div class="url">localhost/release · Blink</div>
+        <div class="t" id="bt">Holdback: release retention</div>
+        <div class="d" id="bd">…</div>
+        <button id="bbtn" disabled>Release funds</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel log">
+    <h2>Recorded on-chain</h2>
+    <table><tbody id="log"><tr><td class="sub">Nothing yet</td></tr></tbody></table>
+  </section>
+</main>
+<div class="toast" id="toast"></div>
+<div id="caption"></div>
+<script>
+// In-browser simulation of the Holdback program rules (same rules as programs/holdback/src/lib.rs).
+const SIM = (() => {
+  const WARRANTY_MS = 45000, FEE = 5000;
+  const names = { client: "Developer: Turan Build", sub: "Subcontractor: Volt Electric", arbiter: "Arbiter: site inspector", funder: "Funder / lender", stranger: "Anyone (a stranger)" };
+  const alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+  const rnd = (n) => Array.from({ length: n }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");
+  let st;
+  function reset() {
+    st = { roles: {}, contract: null, log: [], programId: "6t4LfjbFTBDVhmNypAsHYSvaKdpBNmWLpDaF3G8nZrvB" };
+    for (const k of Object.keys(names)) st.roles[k] = { name: names[k], pubkey: rnd(44), balance: 0 };
+    st.roles.client.balance = 1000000; st.roles.funder.balance = 200000;
+  }
+  reset();
+  const fail = (m) => { throw new Error(m); };
+  const rec = (role, action) => { st.log.unshift({ t: Date.now(), role: names[role], action, sig: rnd(88), fee: FEE }); return {}; };
+  const fmt = (n) => "$" + Math.round(n).toLocaleString("en-US");
+  const c = () => st.contract || fail("create a contract first");
+  const locked = (k) => k.retained - k.paidOutToClient - k.frozen;
+  const actions = {
+    create() {
+      if (st.contract && st.contract.status === "active") fail("a contract is already open, reset to start over");
+      st.contract = { address: rnd(44), title: "Turan Residences, electrical, block B", retentionPct: 5, createdAt: Date.now(), warrantyEnd: Date.now() + WARRANTY_MS, totalPaid: 0, retained: 0, frozen: 0, paidOutToClient: 0, released: 0, askPrice: 0, status: "active", beneficiary: "sub", vault: 0 };
+      return rec("client", "Created contract: 5% retention, " + WARRANTY_MS / 1000 + " s warranty (2 years in real life)");
+    },
+    pay({ amount }) {
+      const k = c(); if (k.status !== "active") fail("the contract is already closed");
+      if (st.roles.client.balance < amount) fail("insufficient balance");
+      const ret = Math.floor(amount * 5 / 100), toSub = amount - ret;
+      st.roles.client.balance -= amount; st.roles.sub.balance += toSub; k.vault += ret;
+      k.totalPaid += amount; k.retained += ret;
+      return rec("client", `Paid invoice ${fmt(amount)} → ${fmt(toSub)} to subcontractor + ${fmt(ret)} into the vault (one transaction)`);
+    },
+    defect({ amount }) {
+      const k = c(); if (k.status !== "active") fail("the contract is already closed");
+      if (Date.now() >= k.warrantyEnd) fail("the warranty has already ended");
+      if (k.frozen > 0) fail("a defect dispute is open");
+      if (amount <= 0 || amount > locked(k)) fail("the defect amount exceeds what is locked in the vault");
+      k.frozen = amount;
+      return rec("client", `Reported defect "sparking socket", froze ${fmt(amount)} (photo hash on-chain)`);
+    },
+    resolve({ payClient }) {
+      const k = c(); if (!(k.frozen > 0)) fail("there is no open defect");
+      const a = k.frozen;
+      if (payClient) { k.vault -= a; st.roles.client.balance += a; k.paidOutToClient += a; }
+      k.frozen = 0;
+      return rec("arbiter", payClient ? "Settled: repair cost goes to the developer" : "Settled: no defect, funds unfrozen");
+    },
+    list({ price }) {
+      const k = c(); if (k.status !== "active") fail("the contract is already closed");
+      k.askPrice = price;
+      return rec(k.beneficiary, `Listed own retention for sale at ${fmt(price)} (cash now instead of in 2 years)`);
+    },
+    buy() {
+      const k = c(); if (k.status !== "active") fail("the contract is already closed");
+      if (!(k.askPrice > 0)) fail("the claim is not for sale");
+      if (k.beneficiary === "funder") fail("the buyer already owns the claim");
+      if (st.roles.funder.balance < k.askPrice) fail("insufficient balance");
+      st.roles.funder.balance -= k.askPrice; st.roles[k.beneficiary].balance += k.askPrice;
+      const p = k.askPrice; k.beneficiary = "funder"; k.askPrice = 0;
+      return rec("funder", `Bought the claim for ${fmt(p)}: payment and ownership change in one transaction`);
+    },
+    early() {
+      const k = c(); if (k.status !== "active") fail("the contract is already closed");
+      if (Date.now() < k.warrantyEnd) fail("the warranty has not ended yet, the vault is locked");
+      return actions.release("client");
+    },
+    release(by) {
+      const k = c(); if (k.status !== "active") fail("the contract is already closed");
+      if (Date.now() < k.warrantyEnd) fail("the warranty has not ended yet, the vault is locked");
+      if (k.frozen > 0) fail("a defect dispute is open");
+      const a = k.vault; st.roles[k.beneficiary].balance += a; k.vault = 0; k.released = a; k.status = "released";
+      return rec(typeof by === "string" ? by : "stranger", `Clicked the Blink "Release funds": ${fmt(a)} went to the claim holder`);
+    },
+  };
+  const view = () => ({ programId: st.programId, mint: "test-USDC", roles: JSON.parse(JSON.stringify(st.roles)), contract: st.contract && { ...st.contract }, log: st.log.slice(), now: Date.now() });
+  const blink = () => {
+    const k = st.contract;
+    return { title: "Holdback: release retention", label: "Release funds",
+      description: !k ? "No contract yet" : k.status === "released" ? `${k.title}. Retention of ${fmt(k.released)} already released.` : `${k.title}. ${fmt(k.vault)} in the vault. Warranty ${Date.now() >= k.warrantyEnd ? "is over: click and the money goes to the claim holder" : "still running"}.`,
+      disabled: !k || k.status !== "active" || Date.now() < k.warrantyEnd || k.frozen > 0 };
+  };
+  return async function api(p, body) {
+    if (p === "/api/state") return view();
+    if (p.startsWith("/api/do/")) { const n = p.slice(8); if (n === "reset") { reset(); return {}; } return actions[n](body || {}); }
+    if (p === "/api/actions/release") { if (!body) return blink(); return { type: "transaction", transaction: "sim" }; }
+    if (p === "/api/wallet/sign-and-send") return actions.release("stranger");
+    throw new Error("unknown route");
+  };
+})();
+
+const fmt = (n) => "$" + Math.round(n).toLocaleString("en-US");
+let S = null, prevBal = {};
+const $ = (id) => document.getElementById(id);
+
+window.setCaption = (t) => { const c = $("caption"); c.textContent = t || ""; c.style.display = t ? "block" : "none"; };
+
+const api = SIM;
+
+function toast(msg) { const t = $("toast"); t.textContent = msg; t.style.display = "block"; setTimeout(() => (t.style.display = "none"), 3500); }
+
+async function refresh() {
+  S = await api("/api/state");
+  $("pid").textContent = S.programId.slice(0, 4) + "…" + S.programId.slice(-4);
+  const R = $("roles"); R.innerHTML = "";
+  for (const [k, r] of Object.entries(S.roles)) {
+    const d = document.createElement("div");
+    const ch = prevBal[k] === undefined ? 0 : r.balance - prevBal[k];
+    d.className = "role" + (ch > 0 ? " up" : ch < 0 ? " down" : "");
+    d.innerHTML = `<div><div class="n">${r.name}</div><div class="k">${r.pubkey.slice(0, 6)}…${r.pubkey.slice(-4)}</div></div><div class="b">${fmt(r.balance)} ${ch ? `<div class="k" style="color:${ch > 0 ? "var(--green)" : "var(--red)"}">${ch > 0 ? "+" : "−"}${fmt(Math.abs(ch))}</div>` : ""}</div>`;
+    R.appendChild(d);
+    prevBal[k] = r.balance;
+  }
+  const c = S.contract;
+  if (c) {
+    $("ctitle").textContent = c.title;
+    $("csub").textContent = `Vault: ${c.address.slice(0, 6)}…${c.address.slice(-4)} · retention ${c.retentionPct}%`;
+    const old = Number($("vamt").dataset.v || 0);
+    $("vamt").textContent = fmt(c.vault); $("vamt").dataset.v = c.vault;
+    if (c.vault !== old) { $("vault").classList.add("pulse"); setTimeout(() => $("vault").classList.remove("pulse"), 900); }
+    $("cpaid").textContent = `Paid by invoices: ${fmt(c.totalPaid)}`;
+    $("cfrozen").style.display = c.frozen ? "" : "none"; $("cfrozen").textContent = `❄ Frozen for a defect: ${fmt(c.frozen)}`;
+    const owner = S.roles[c.beneficiary] ? S.roles[c.beneficiary].name : c.beneficiary;
+    $("cowner").style.display = ""; $("cowner").textContent = `Will receive the funds: ${owner}`;
+    $("cask").style.display = c.askPrice ? "" : "none"; $("cask").textContent = `For sale at ${fmt(c.askPrice)}`;
+    $("cdone").style.display = c.status === "released" ? "" : "none"; $("cdone").textContent = `✓ Released ${fmt(c.released)}`;
+  }
+  const b = await api("/api/actions/release");
+  $("bt").textContent = b.title; $("bd").textContent = b.description; $("bbtn").disabled = b.disabled;
+  $("stx").textContent = S.log.length;
+  $("sfee").textContent = (S.log.reduce((a, e) => a + (e.fee || 0), 0) / 1e9).toFixed(6) + " SOL";
+  const L = $("log");
+  L.innerHTML = S.log.length ? "" : '<tr><td class="sub">Nothing yet</td></tr>';
+  for (const e of S.log) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td class="who">${new Date(e.t).toLocaleTimeString("en-US")}</td><td class="who">${e.role}</td><td>${e.action}</td><td class="sig">${e.sig.slice(0, 8)}…${e.sig.slice(-6)}</td><td class="fee">${e.fee !== null ? (e.fee / 1e9).toFixed(6) + " SOL" : ""}</td>`;
+    L.appendChild(tr);
+  }
+}
+
+function tick() {
+  const c = S && S.contract;
+  if (!c) return;
+  const total = c.warrantyEnd - c.createdAt;
+  const left = Math.max(0, c.warrantyEnd - Date.now());
+  $("tleft").textContent = c.status === "released" ? "released" : left > 0 ? Math.ceil(left / 1000) + " s" : "over";
+  const frac = c.status === "released" ? 1 : 1 - Math.min(1, left / total);
+  $("arc").setAttribute("stroke-dashoffset", String(100 - frac * 100));
+  $("arc").setAttribute("stroke", left > 0 ? "#9b6bff" : "#19d58a");
+  if (left === 0 && $("bbtn").disabled && c.status === "active" && !c.frozen) refresh();
+}
+
+async function run(a, p, btn) {
+  if (a === "reset") { prevBal = {}; $("vamt").dataset.v = 0; $("vamt").textContent = "$0"; $("ctitle").textContent = "No contract yet"; $("csub").textContent = 'Click "Create contract"'; ["cfrozen","cask","cdone","cowner"].forEach((i) => ($(i).style.display = "none")); }
+  if (a === "list" && !p) p = { price: Math.round(S.contract.vault * 0.9) };
+  document.querySelectorAll(".btn").forEach((x) => x.classList.remove("active"));
+  if (btn) btn.classList.add("active");
+  try {
+    await api("/api/do/" + a, p || {});
+    if (a === "pay") {
+      $("lsub").textContent = fmt(p.amount * 0.95); $("lvlt").textContent = fmt(p.amount * 0.05);
+      ["fsub", "fvlt"].forEach((id) => { $(id).classList.remove("flash"); void $(id).offsetWidth; $(id).classList.add("flash"); });
+    }
+  } catch (e) { toast("Program rejected: " + e.message); }
+  await refresh();
+}
+
+document.querySelectorAll(".btn").forEach((b) => b.addEventListener("click", () => run(b.dataset.a, b.dataset.p ? JSON.parse(b.dataset.p) : null, b)));
+window.runAction = (a, p) => run(a, p, document.querySelector(`.btn[data-a="${a}"]`));
+
+$("bbtn").addEventListener("click", async () => {
+  try {
+    const account = S.roles.stranger.pubkey;
+    const { transaction } = await api("/api/actions/release", { account });
+    await api("/api/wallet/sign-and-send", { transaction, role: "stranger" });
+  } catch (e) { toast("Program rejected: " + e.message); }
+  await refresh();
+});
+
+refresh(); setInterval(tick, 250); setInterval(refresh, 4000);
+</script>
